@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多巴胺英語單字卡 - 字母D</title>
+    <style>
+        :root {
+            /* 多巴胺色票 Dopamine Palette */
+            --bg-color: #FFFBEB; /* 柔和黃底 */
+            --card-front: #FFDE59; /* 亮黃 */
+            --card-back: #7ED957; /* 鮮綠 */
+            --text-primary: #333;
+            --btn-master: #FF5757; /* 珊瑚紅 */
+            --btn-learn: #5CE1E6; /* 亮青 */
+            --btn-arrow: #CB6CE6; /* 紫色 */
+            --btn-reset: #FF9F1C; /* 鮮橘色 */
+        }
+
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 右上角重置按鈕 */
+        .reset-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--btn-reset);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+            z-index: 100;
+        }
+
+        .reset-btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        /* 卡片容器與翻轉效果 */
+        .card-container {
+            width: 90%;
+            max-width: 400px;
+            height: 500px;
+            perspective: 1000px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 30px;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            border: 5px solid #fff;
+        }
+
+        /* 正面設計 */
+        .card-front {
+            background-color: var(--card-front);
+            color: var(--text-primary);
+        }
+
+        /* 喇叭圖示樣式 */
+        .speaker-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 3rem; /* 圖示大小 */
+            cursor: pointer;
+            background: rgba(255,255,255,0.4);
+            width: 60px;
+            height: 60px;
+            line-height: 60px;
+            border-radius: 50%;
+            transition: transform 0.2s, background 0.2s;
+            z-index: 50; /* 確保它在最上層 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .speaker-icon:hover {
+            transform: scale(1.1);
+            background: rgba(255,255,255,0.8);
+        }
+
+        .speaker-icon:active {
+            transform: scale(0.95);
+        }
+
+        .english-word {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #FF6B6B;
+            text-shadow: 2px 2px 0px #FFF;
+        }
+
+        .pos-tag {
+            background: #FFF;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #555;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+        }
+
+        /* 背面設計 */
+        .card-back {
+            background-color: var(--card-back);
+            color: var(--text-primary);
+            transform: rotateY(180deg);
+        }
+
+        .chinese-def {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #FFF;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        .example-sentence {
+            font-size: 1.4rem;
+            line-height: 1.6;
+            background: rgba(255,255,255,0.3);
+            padding: 15px;
+            border-radius: 15px;
+            white-space: pre-wrap; /* 讓例句中的換行符號生效 */
+        }
+
+        /* 控制區 */
+        .controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            width: 90%;
+            max-width: 400px;
+            justify-content: space-between;
+        }
+
+        .arrow-btn {
+            background: var(--btn-arrow);
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+
+        .action-btn {
+            border: none;
+            padding: 15px 25px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+            flex: 1;
+        }
+
+        .btn-master { background-color: var(--btn-master); }
+        .btn-learn { background-color: var(--btn-learn); color: #333; }
+        
+        button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .progress {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #888;
+        }
+        
+        .empty-state {
+            display: none;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+    </style>
+</head>
+<body>
+
+    <button class="reset-btn" onclick="confirmReset()">🔄 全部重來</button>
+
+    <div class="progress">進度：<span id="current-index">0</span> / <span id="total-count">101</span></div>
+
+    <div class="card-container" id="card-container" onclick="flipCard()">
+        <div class="card" id="card">
+            <div class="card-face card-front">
+                <div class="speaker-icon" onclick="playAudio(event)">🔊</div>
+                
+                <div class="english-word" id="word"></div>
+                <div class="pos-tag" id="pos"></div>
+                <div style="margin-top:20px; font-size: 0.9rem; opacity: 0.7;">(點擊卡片翻面)</div>
+            </div>
+            <div class="card-face card-back">
+                <div class="chinese-def" id="def"></div>
+                <div class="example-sentence" id="sentence"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="empty-state" id="empty-state">
+        <h2>🎉 太棒了！</h2>
+        <p>所有單字都已精熟！</p>
+        <button class="action-btn btn-learn" onclick="resetProgress()">重新開始</button>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="arrow-btn" onclick="prevCard()">&#8592;</button>
+        <button class="action-btn btn-master" onclick="markMastered()">💖 已精熟</button>
+        <button class="action-btn btn-learn" onclick="markLearning()">💪 學習中</button>
+        <button class="arrow-btn" onclick="nextCard()">&#8594;</button>
+    </div>
+
+    <script>
+        // 資料來源：字母D 單字列表 (共 101 個單字) - 已移除例句中的 ** 符號
+        const vocabData = [
+            { word: "dad", pos: "noun", def: "爸爸", ex: "My dad works hard. (我爸爸工作很努力。)" },
+            { word: "daily", pos: "adj./adv.", def: "每日的", ex: "I read the daily news. (我讀每日新聞。)" },
+            { word: "damage", pos: "noun/verb", def: "損害", ex: "The fire caused great damage. (火災造成了巨大的損害。)" },
+            { word: "dance", pos: "verb/noun", def: "跳舞", ex: "She loves to dance. (她喜歡跳舞。)" },
+            { word: "danger", pos: "noun", def: "危險", ex: "Don't go near the water, it is danger. (不要靠近水邊，那很危險。)" },
+            { word: "dark", pos: "adj./noun", def: "黑暗的", ex: "It gets dark early in winter. (冬天很早就天黑了。)" },
+            { word: "data", pos: "noun", def: "資料", ex: "We need more data to analyze. (我們需要更多資料來分析。)" },
+            { word: "date", pos: "noun", def: "日期", ex: "What is today's date? (今天是什麼日期？)" },
+            { word: "daughter", pos: "noun", def: "女兒", ex: "My daughter is ten years old. (我的女兒十歲了。)" },
+            { word: "day", pos: "noun", def: "白天", ex: "Have a nice day. (祝你有美好的一天。)" },
+            { word: "dead", pos: "adj.", def: "死的", ex: "The plant is dead. (這株植物死了。)" },
+            { word: "deal", pos: "verb/noun", def: "處理", ex: "We need to deal with this problem. (我們需要處理這個問題。)" },
+            { word: "dear", pos: "adj.", def: "親愛的", ex: "Dear Mom and Dad. (親愛的爸爸媽媽。)" },
+            { word: "death", pos: "noun", def: "死亡", ex: "His death was a tragedy. (他的死亡是一個悲劇。)" },
+            { word: "debate", pos: "noun/verb", def: "爭論", ex: "They had a heated debate. (他們進行了一場激烈的辯論。)" },
+            { word: "debt", pos: "noun", def: "債務", ex: "He is in debt. (他負債了。)" },
+            { word: "decade", pos: "noun", def: "十年", ex: "A decade is ten years. (十年是一個十年。)" },
+            { word: "December", pos: "noun", def: "十二月", ex: "December is the last month of the year. (十二月是一年中的最後一個月。)" },
+            { word: "decide", pos: "verb", def: "決定", ex: "I cannot decide what to eat. (我無法決定要吃什麼。)" },
+            { word: "decision", pos: "noun", def: "決定", ex: "That was a difficult decision. (那是一個困難的決定。)" },
+            { word: "decorate", pos: "verb", def: "裝飾", ex: "Let's decorate the room for Christmas. (我們來裝飾房間過聖誕節吧。)" },
+            { word: "deep", pos: "adj.", def: "深的", ex: "The water is very deep. (水很深。)" },
+            { word: "defeat", pos: "verb/noun", def: "擊敗", ex: "They defeated the enemy. (他們擊敗了敵人。)" },
+            { word: "defend", pos: "verb", def: "防禦", ex: "We must defend our country. (我們必須保衛我們的國家。)" },
+            { word: "defense", pos: "noun", def: "防禦", ex: "The team has a strong defense. (這支隊伍有很強的防禦。)" },
+            { word: "define", pos: "verb", def: "定義", ex: "Can you define this word? (你能定義這個詞嗎？)" },
+            { word: "degree", pos: "noun", def: "程度", ex: "The temperature is 25 degrees. (氣溫是 25 度。)" },
+            { word: "delay", pos: "noun/verb", def: "延遲", ex: "The flight was delayed. (航班被延遲了。)" },
+            { word: "delicious", pos: "adj.", def: "美味的", ex: "This cake is delicious. (這個蛋糕很美味。)" },
+            { word: "deliver", pos: "verb", def: "遞送", ex: "The postman will deliver the mail. (郵差會遞送郵件。)" },
+            { word: "demand", pos: "noun/verb", def: "要求", ex: "He demanded an apology. (他要求道歉。)" },
+            { word: "deny", pos: "verb", def: "否認", ex: "He denied stealing the money. (他否認偷了錢。)" },
+            { word: "department", pos: "noun", def: "部門", ex: "Which department do you work in? (你在哪個部門工作？)" },
+            { word: "depend", pos: "verb", def: "依賴", ex: "You can depend on me. (你可以依賴我。)" },
+            { word: "deposit", pos: "noun/verb", def: "存款", ex: "I made a deposit at the bank. (我在銀行存了一筆錢。)" },
+            { word: "describe", pos: "verb", def: "描述", ex: "Can you describe the thief? (你能描述一下那個小偷嗎？)" },
+            { word: "desert", pos: "noun", def: "沙漠", ex: "The Sahara desert is huge. (撒哈拉沙漠非常巨大。)" },
+            { word: "design", pos: "noun/verb", def: "設計", ex: "She designs clothes. (她設計衣服。)" },
+            { word: "desire", pos: "noun/verb", def: "渴望", ex: "He has a strong desire to win. (他有強烈的獲勝渴望。)" },
+            { word: "desk", pos: "noun", def: "書桌", ex: "Put the book on the desk. (把書放在書桌上。)" },
+            { word: "destroy", pos: "verb", def: "破壞", ex: "The storm destroyed the house. (暴風雨摧毀了房子。)" },
+            { word: "detail", pos: "noun", def: "細節", ex: "Please check the details. (請檢查細節。)" },
+            { word: "develop", pos: "verb", def: "發展", ex: "We need to develop new products. (我們需要開發新產品。)" },
+            { word: "device", pos: "noun", def: "裝置", ex: "My phone is a smart device. (我的手機是個智慧裝置。)" },
+            { word: "dialogue", pos: "noun", def: "對話", ex: "The play has good dialogue. (這齣戲的對白很棒。)" },
+            { word: "diamond", pos: "noun", def: "鑽石", ex: "She wore a diamond ring. (她戴著一枚鑽戒。)" },
+            { word: "dictionary", pos: "noun", def: "字典", ex: "Look up the word in the dictionary. (在字典裡查這個字。)" },
+            { word: "die", pos: "verb", def: "死亡", ex: "The patient may die. (這位病人可能會死。)" },
+            { word: "diet", pos: "noun", def: "飲食", ex: "I am on a strict diet. (我正在嚴格控制飲食。)" },
+            { word: "difference", pos: "noun", def: "差異", ex: "What is the difference? (有什麼不同？)" },
+            { word: "different", pos: "adj.", def: "不同的", ex: "We have different opinions. (我們有不同的意見。)" },
+            { word: "difficult", pos: "adj.", def: "困難的", ex: "The test was very difficult. (這場考試非常困難。)" },
+            { word: "difficulty", pos: "noun", def: "困難", ex: "They faced many difficulties. (他們面臨了許多困難。)" },
+            { word: "dig", pos: "verb", def: "挖掘", ex: "They are digging a hole. (他們正在挖一個洞。)" },
+            { word: "dimension", pos: "noun", def: "尺寸", ex: "What are the dimensions of the box? (這個盒子的尺寸是多少？)" },
+            { word: "dinner", pos: "noun", def: "晚餐", ex: "What's for dinner tonight? (今晚晚餐吃什麼？)" },
+            { word: "diploma", pos: "noun", def: "畢業證書", ex: "He got his diploma last year. (他去年拿到了畢業證書。)" },
+            { word: "direct", pos: "adj.", def: "直接的", ex: "Go straight in that direction. (直接朝那個方向走。)" },
+            { word: "direction", pos: "noun", def: "方向", ex: "Which direction should we go? (我們該往哪個方向走？)" },
+            { word: "dirty", pos: "adj.", def: "髒的", ex: "My shoes are dirty. (我的鞋子很髒。)" },
+            { word: "disappear", pos: "verb", def: "消失", ex: "The rabbit suddenly disappeared. (兔子突然消失了。)" },
+            { word: "discover", pos: "verb", def: "發現", ex: "I discovered a new cafe. (我發現了一家新的咖啡館。)" },
+            { word: "discount", pos: "noun/verb", def: "折扣", ex: "They offered a big discount. (他們提供了很大的折扣。)" },
+            { word: "discuss", pos: "verb", def: "討論", ex: "We need to discuss the plan. (我們需要討論這個計畫。)" },
+            { word: "disease", pos: "noun", def: "疾病", ex: "This is a serious disease. (這是一種嚴重的疾病。)" },
+            { word: "dish", pos: "noun", def: "盤子、菜餚", ex: "This is my favorite dish. (這是我最喜歡的菜餚。)" },
+            { word: "display", pos: "verb/noun", def: "展示", ex: "The paintings are on display. (這些畫作正在展示。)" },
+            { word: "distance", pos: "noun", def: "距離", ex: "What is the distance to the station? (到車站的距離是多少？)" },
+            { word: "disturb", pos: "verb", def: "打擾", ex: "Please do not disturb me. (請不要打擾我。)" },
+            { word: "divide", pos: "verb", def: "分割", ex: "Divide the cake into four pieces. (把蛋糕分成四塊。)" },
+            { word: "divorce", pos: "noun/verb", def: "離婚", ex: "They decided to get a divorce. (他們決定離婚。)" },
+            { word: "do", pos: "verb", def: "做", ex: "What are you going to do? (你打算做什麼？)" },
+            { word: "doctor", pos: "noun", def: "醫生", ex: "I went to see the doctor. (我去看醫生了。)" },
+            { word: "document", pos: "noun", def: "文件", ex: "Sign this document. (簽署這份文件。)" },
+            { word: "dog", pos: "noun", def: "狗", ex: "My dog is very playful. (我的狗非常愛玩。)" },
+            { word: "doll", pos: "noun", def: "洋娃娃", ex: "The girl loves her doll. (那個女孩很喜歡她的洋娃娃。)" },
+            { word: "door", pos: "noun", def: "門", ex: "Close the door, please. (請關上門。)" },
+            { word: "double", pos: "adj.", def: "兩倍的", ex: "I want a double scoop of ice cream. (我要兩倍份量的冰淇淋。)" },
+            { word: "doubt", pos: "noun/verb", def: "懷疑", ex: "I doubt his honesty. (我懷疑他的誠實。)" },
+            { word: "down", pos: "adv./prep.", def: "向下", ex: "Look down at the floor. (看著地板。)" },
+            { word: "downtown", pos: "noun/adv.", def: "市中心", ex: "Let's go downtown. (我們去市中心吧。)" },
+            { word: "dozen", pos: "noun", def: "一打", ex: "I bought a dozen eggs. (我買了一打雞蛋。)" },
+            { word: "draft", pos: "noun/verb", def: "草稿", ex: "This is the first draft of my essay. (這是我的文章初稿。)" },
+            { word: "drag", pos: "verb", def: "拖拉", ex: "Drag the file to the desktop. (把檔案拖到桌面上。)" },
+            { word: "draw", pos: "verb", def: "畫", ex: "Can you draw a cat? (你會畫貓嗎？)" },
+            { word: "dream", pos: "noun/verb", def: "夢", ex: "I had a strange dream last night. (我昨晚做了一個奇怪的夢。)" },
+            { word: "dress", pos: "noun/verb", def: "洋裝", ex: "She wore a beautiful dress. (她穿了一件漂亮的洋裝。)" },
+            { word: "drink", pos: "noun/verb", def: "飲料", ex: "I need a cold drink. (我需要一杯冷飲。)" },
+            { word: "drive", pos: "verb", def: "駕駛", ex: "I drive to work every day. (我每天開車上班。)" },
+            { word: "driver", pos: "noun", def: "司機", ex: "The bus driver was friendly. (公車司機很友善。)" },
+            { word: "drop", pos: "verb", def: "掉落", ex: "Don't drop your phone. (不要讓你的手機掉下去。)" },
+            { word: "drug", pos: "noun", def: "藥物", ex: "Take this drug twice a day. (這種藥物一天吃兩次。)" },
+            { word: "drum", pos: "noun", def: "鼓", ex: "He plays the drums in a band. (他在樂團裡打鼓。)" },
+            { word: "dry", pos: "adj./verb", def: "乾的", ex: "Is the laundry dry yet? (衣服曬乾了嗎？)" },
+            { word: "duck", pos: "noun", def: "鴨子", ex: "We saw a duck in the pond. (我們在池塘裡看到一隻鴨子。)" },
+            { word: "due", pos: "adj.", def: "到期的", ex: "The rent is due next week. (租金下週到期。)" },
+            { word: "dull", pos: "adj.", def: "枯燥的", ex: "The lecture was very dull. (那場講座非常枯燥。)" },
+            { word: "dump", pos: "verb", def: "傾倒", ex: "Don't dump trash here. (不要在這裡傾倒垃圾。)" },
+            { word: "during", pos: "prep.", def: "在...期間", ex: "I worked hard during the summer. (我在夏天期間工作很努力。)" },
+            { word: "dust", pos: "noun/verb", def: "灰塵", ex: "There is too much dust on the shelf. (架子上有太多灰塵。)" },
+            { word: "duty", pos: "noun", def: "責任", ex: "It is your duty to protect your family. (保護你的家人是你的責任。)" }
+        ];
+
+        let currentIndex = 0;
+        let activeList = []; 
+        
+        let cardElement, wordEl, posEl, defEl, sentenceEl;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            cardElement = document.getElementById('card');
+            wordEl = document.getElementById('word');
+            posEl = document.getElementById('pos');
+            defEl = document.getElementById('def');
+            sentenceEl = document.getElementById('sentence');
+            
+            loadProgress();
+        });
+
+
+        function loadProgress() {
+            // 注意：這裡將 key 設為 masteredWords_D，確保 D 字母進度獨立
+            const mastered = JSON.parse(localStorage.getItem('masteredWords_D')) || []; 
+            // 過濾掉已經精熟的單字，只留下需要學習的
+            activeList = vocabData.filter(item => !mastered.includes(item.word));
+            
+            if (activeList.length === 0) {
+                showEmptyState();
+            } else {
+                // 恢復正常顯示
+                document.getElementById('card-container').style.display = 'block';
+                document.getElementById('controls').style.display = 'flex';
+                document.getElementById('empty-state').style.display = 'none';
+                document.querySelector('.progress').style.display = 'block';
+                renderCard();
+            }
+            updateCount();
+        }
+
+        
+        function renderCard() {
+            if (activeList.length === 0) return;
+            
+            // 確保 index 不會超出範圍
+            if (currentIndex >= activeList.length) currentIndex = 0;
+            if (currentIndex < 0) currentIndex = activeList.length - 1;
+
+            const item = activeList[currentIndex];
+            wordEl.textContent = item.word;
+            posEl.textContent = item.pos;
+            defEl.textContent = item.def;
+            sentenceEl.innerHTML = item.ex.replace(/\n/g, "<br>"); // 支援換行
+            
+            // 每次切換卡片時，確保卡片轉回正面
+            cardElement.classList.remove('is-flipped');
+        }
+
+        function flipCard() {
+            // 翻卡前先停止發音
+            speechSynthesis.cancel();
+            if (cardElement) {
+               cardElement.classList.toggle('is-flipped');
+            }
+        }
+
+        function playAudio(event) {
+            // 阻止事件冒泡：讓瀏覽器知道「只播放聲音，不要觸發翻面」
+            event.stopPropagation();
+
+            if (activeList.length === 0) return;
+
+            const word = activeList[currentIndex].word;
+            
+            // 停止任何正在播放的語音
+            speechSynthesis.cancel();
+            
+            // 使用瀏覽器內建的語音合成
+            const utterance = new SpeechSynthesisUtterance(word);
+            
+            // 設定語言為美式英語 (en-US)
+            utterance.lang = 'en-US'; 
+            
+            // 語速
+            utterance.rate = 0.8; 
+
+            // 播放
+            speechSynthesis.speak(utterance);
+        }
+
+        function nextCard() {
+            currentIndex++;
+            renderCard();
+            updateCount();
+        }
+
+        function prevCard() {
+            currentIndex--;
+            renderCard();
+            updateCount();
+        }
+
+        function markMastered() {
+            if (activeList.length === 0) return;
+            
+            const currentWord = activeList[currentIndex].word;
+            
+            // 存入 LocalStorage，使用 D 的專屬 key
+            let mastered = JSON.parse(localStorage.getItem('masteredWords_D')) || [];
+            if (!mastered.includes(currentWord)) {
+                mastered.push(currentWord);
+                localStorage.setItem('masteredWords_D', JSON.stringify(mastered));
+            }
+
+            // 從目前的播放清單移除
+            activeList.splice(currentIndex, 1);
+            
+            // 檢查是否還有單字
+            if (activeList.length === 0) {
+                showEmptyState();
+            } else {
+                renderCard();
+            }
+            updateCount();
+        }
+
+        function markLearning() {
+            nextCard();
+        }
+
+        function showEmptyState() {
+            document.getElementById('card-container').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+            document.querySelector('.progress').style.display = 'none';
+        }
+
+        function resetProgress() {
+            localStorage.removeItem('masteredWords_D');
+            location.reload(); // 重新載入網頁
+        }
+
+        // 帶有確認視窗的重置功能
+        function confirmReset() {
+            if (confirm("確定要清除所有紀錄，重新練習所有單字嗎？")) {
+                resetProgress();
+            }
+        }
+
+        function updateCount() {
+            document.getElementById('current-index').textContent = activeList.length > 0 ? currentIndex + 1 : 0;
+            // 顯示 activeList 的長度 (待學單字數)
+            document.getElementById('total-count').textContent = activeList.length; 
+        }
+        
+    </script>
+</body>
+</html>

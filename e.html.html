@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多巴胺英語單字卡 - 字母E</title>
+    <style>
+        :root {
+            /* 多巴胺色票 Dopamine Palette */
+            --bg-color: #FFFBEB; /* 柔和黃底 */
+            --card-front: #FFDE59; /* 亮黃 */
+            --card-back: #7ED957; /* 鮮綠 */
+            --text-primary: #333;
+            --btn-master: #FF5757; /* 珊瑚紅 */
+            --btn-learn: #5CE1E6; /* 亮青 */
+            --btn-arrow: #CB6CE6; /* 紫色 */
+            --btn-reset: #FF9F1C; /* 鮮橘色 */
+        }
+
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 右上角重置按鈕 */
+        .reset-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--btn-reset);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+            z-index: 100;
+        }
+
+        .reset-btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        /* 卡片容器與翻轉效果 */
+        .card-container {
+            width: 90%;
+            max-width: 400px;
+            height: 500px;
+            perspective: 1000px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 30px;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            border: 5px solid #fff;
+        }
+
+        /* 正面設計 */
+        .card-front {
+            background-color: var(--card-front);
+            color: var(--text-primary);
+        }
+
+        /* 喇叭圖示樣式 */
+        .speaker-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 3rem; /* 圖示大小 */
+            cursor: pointer;
+            background: rgba(255,255,255,0.4);
+            width: 60px;
+            height: 60px;
+            line-height: 60px;
+            border-radius: 50%;
+            transition: transform 0.2s, background 0.2s;
+            z-index: 50; /* 確保它在最上層 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .speaker-icon:hover {
+            transform: scale(1.1);
+            background: rgba(255,255,255,0.8);
+        }
+
+        .speaker-icon:active {
+            transform: scale(0.95);
+        }
+
+        .english-word {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #FF6B6B;
+            text-shadow: 2px 2px 0px #FFF;
+        }
+
+        .pos-tag {
+            background: #FFF;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #555;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+        }
+
+        /* 背面設計 */
+        .card-back {
+            background-color: var(--card-back);
+            color: var(--text-primary);
+            transform: rotateY(180deg);
+        }
+
+        .chinese-def {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #FFF;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        .example-sentence {
+            font-size: 1.4rem;
+            line-height: 1.6;
+            background: rgba(255,255,255,0.3);
+            padding: 15px;
+            border-radius: 15px;
+            white-space: pre-wrap; /* 讓例句中的換行符號生效 */
+        }
+
+        /* 控制區 */
+        .controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            width: 90%;
+            max-width: 400px;
+            justify-content: space-between;
+        }
+
+        .arrow-btn {
+            background: var(--btn-arrow);
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+
+        .action-btn {
+            border: none;
+            padding: 15px 25px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+            flex: 1;
+        }
+
+        .btn-master { background-color: var(--btn-master); }
+        .btn-learn { background-color: var(--btn-learn); color: #333; }
+        
+        button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .progress {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #888;
+        }
+        
+        .empty-state {
+            display: none;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+    </style>
+</head>
+<body>
+
+    <button class="reset-btn" onclick="confirmReset()">🔄 全部重來</button>
+
+    <div class="progress">進度：<span id="current-index">0</span> / <span id="total-count">0</span></div>
+
+    <div class="card-container" id="card-container" onclick="flipCard()">
+        <div class="card" id="card">
+            <div class="card-face card-front">
+                <div class="speaker-icon" onclick="playAudio(event)">🔊</div>
+                
+                <div class="english-word" id="word"></div>
+                <div class="pos-tag" id="pos"></div>
+                <div style="margin-top:20px; font-size: 0.9rem; opacity: 0.7;">(點擊卡片翻面)</div>
+            </div>
+            <div class="card-face card-back">
+                <div class="chinese-def" id="def"></div>
+                <div class="example-sentence" id="sentence"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="empty-state" id="empty-state">
+        <h2>🎉 太棒了！</h2>
+        <p>所有單字都已精熟！</p>
+        <button class="action-btn btn-learn" onclick="resetProgress()">重新開始</button>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="arrow-btn" onclick="prevCard()">&#8592;</button>
+        <button class="action-btn btn-master" onclick="markMastered()">💖 已精熟</button>
+        <button class="action-btn btn-learn" onclick="markLearning()">💪 學習中</button>
+        <button class="arrow-btn" onclick="nextCard()">&#8594;</button>
+    </div>
+
+    <script>
+        // 資料來源：字母E 單字列表
+        const vocabData = [
+            { word: "each", pos: "adj./pron.", def: "每一個", ex: "Each student has a book. (每個學生都有一本書。)" },
+            { word: "eagle", pos: "noun", def: "老鷹", ex: "The eagle is flying high. (老鷹飛得很高。)" },
+            { word: "ear", pos: "noun", def: "耳朵", ex: "She has small ears. (她的耳朵很小。)" },
+            { word: "early", pos: "adj./adv.", def: "早的", ex: "I wake up early. (我起得很早。)" },
+            { word: "earn", pos: "verb", def: "賺取", ex: "He earns a lot of money. (他賺很多錢。)" },
+            { word: "earring", pos: "noun", def: "耳環", ex: "She is wearing gold earrings. (她戴著金耳環。)" },
+            { word: "earth", pos: "noun", def: "地球、泥土", ex: "The Earth is round. (地球是圓的。)" },
+            { word: "earthquake", pos: "noun", def: "地震", ex: "The earthquake shook the house. (地震震動了房子。)" },
+            { word: "ease", pos: "noun", def: "容易、舒適", ex: "He passed the test with ease. (他輕易地通過了考試。)" },
+            { word: "east", pos: "noun/adj.", def: "東方", ex: "The sun rises in the east. (太陽從東方升起。)" },
+            { word: "Easter", pos: "noun", def: "復活節", ex: "We hunt for eggs on Easter. (我們在復活節找彩蛋。)" },
+            { word: "easy", pos: "adj.", def: "容易的", ex: "This question is easy. (這個問題很簡單。)" },
+            { word: "eat", pos: "verb", def: "吃", ex: "I like to eat pizza. (我喜歡吃披薩。)" },
+            { word: "edge", pos: "noun", def: "邊緣", ex: "Don't stand on the edge. (不要站在邊緣。)" },
+            { word: "edit", pos: "verb", def: "編輯", ex: "He is editing the video. (他正在編輯影片。)" },
+            { word: "education", pos: "noun", def: "教育", ex: "Education is important. (教育很重要。)" },
+            { word: "effect", pos: "noun", def: "效果、影響", ex: "The medicine had a good effect. (這藥有很好的效果。)" },
+            { word: "effort", pos: "noun", def: "努力", ex: "He put a lot of effort into his work. (他投入了很多努力在他的工作上。)" },
+            { word: "egg", pos: "noun", def: "蛋", ex: "I had a boiled egg for breakfast. (我早餐吃了一顆水煮蛋。)" },
+            { word: "eight", pos: "num.", def: "八", ex: "I have eight pens. (我有八枝筆。)" },
+            { word: "eighteen", pos: "num.", def: "十八", ex: "She is eighteen years old. (她十八歲。)" },
+            { word: "eighty", pos: "num.", def: "八十", ex: "My grandfather is eighty. (我的祖父八十歲。)" },
+            { word: "either", pos: "adj./pron.", def: "兩者之一", ex: "You can take either road. (這兩條路你走哪一條都行。)" },
+            { word: "elder", pos: "adj./noun", def: "年長的、長輩", ex: "Respect your elders. (尊敬你的長輩。)" },
+            { word: "elect", pos: "verb", def: "選舉", ex: "They elected him as president. (他們選他當總統。)" },
+            { word: "election", pos: "noun", def: "選舉", ex: "The election is next week. (選舉在下週。)" },
+            { word: "electric", pos: "adj.", def: "電的", ex: "I bought an electric guitar. (我買了一把電吉他。)" },
+            { word: "electricity", pos: "noun", def: "電力", ex: "The storm cut off the electricity. (暴風雨切斷了電力。)" },
+            { word: "element", pos: "noun", def: "要素", ex: "Trust is a key element of friendship. (信任是友誼的關鍵要素。)" },
+            { word: "elephant", pos: "noun", def: "大象", ex: "The elephant has a long trunk. (大象有長長的鼻子。)" },
+            { word: "elevator", pos: "noun", def: "電梯", ex: "Let's take the elevator. (我們搭電梯吧。)" },
+            { word: "eleven", pos: "num.", def: "十一", ex: "It is eleven o'clock. (現在是十一點。)" },
+            { word: "else", pos: "adv.", def: "其他", ex: "Do you want anything else? (你還要其他的嗎？)" },
+            { word: "email", pos: "noun/verb", def: "電子郵件", ex: "Send me an email. (寄一封電子郵件給我。)" },
+            { word: "embarrass", pos: "verb", def: "使尷尬", ex: "Don't embarrass me. (別讓我尷尬。)" },
+            { word: "emotion", pos: "noun", def: "情緒", ex: "She showed no emotion. (她沒有表現出任何情緒。)" },
+            { word: "emphasize", pos: "verb", def: "強調", ex: "He emphasized the importance of safety. (他強調了安全的重要性。)" },
+            { word: "employ", pos: "verb", def: "雇用", ex: "The company employs 100 people. (這家公司雇用了100人。)" },
+            { word: "empty", pos: "adj.", def: "空的", ex: "The box is empty. (這個箱子是空的。)" },
+            { word: "encourage", pos: "verb", def: "鼓勵", ex: "My teacher encouraged me to try. (我的老師鼓勵我嘗試。)" },
+            { word: "end", pos: "noun/verb", def: "結束", ex: "This is the end of the movie. (這是電影的結局。)" },
+            { word: "enemy", pos: "noun", def: "敵人", ex: "They faced the enemy bravely. (他們勇敢地面對敵人。)" },
+            { word: "energy", pos: "noun", def: "能量、能源", ex: "Solar energy is clean. (太陽能是乾淨的。)" },
+            { word: "engine", pos: "noun", def: "引擎", ex: "The car engine is loud. (汽車引擎很大聲。)" },
+            { word: "engineer", pos: "noun", def: "工程師", ex: "He wants to be an engineer. (他想成為一名工程師。)" },
+            { word: "English", pos: "noun/adj.", def: "英語、英國的", ex: "I am learning English. (我正在學英文。)" },
+            { word: "enjoy", pos: "verb", def: "享受", ex: "Did you enjoy the party? (你喜歡這場派對嗎？)" },
+            { word: "enough", pos: "adj./adv.", def: "足夠的", ex: "I have enough money. (我有足夠的錢。)" },
+            { word: "enter", pos: "verb", def: "進入", ex: "Please enter the room. (請進入房間。)" },
+            { word: "entrance", pos: "noun", def: "入口", ex: "The entrance is over there. (入口在那邊。)" },
+            { word: "envelope", pos: "noun", def: "信封", ex: "Put the letter in the envelope. (把信放進信封裡。)" },
+            { word: "environment", pos: "noun", def: "環境", ex: "We must protect the environment. (我們必須保護環境。)" },
+            { word: "envy", pos: "noun/verb", def: "羨慕、嫉妒", ex: "I envy your talent. (我羨慕你的才華。)" },
+            { word: "equal", pos: "adj.", def: "平等的", ex: "All men are created equal. (人生而平等。)" },
+            { word: "equipment", pos: "noun", def: "裝備", ex: "We need camping equipment. (我們需要露營裝備。)" },
+            { word: "eraser", pos: "noun", def: "橡皮擦", ex: "Can I borrow your eraser? (我可以借你的橡皮擦嗎？)" },
+            { word: "error", pos: "noun", def: "錯誤", ex: "There is an error in the system. (系統裡有一個錯誤。)" },
+            { word: "escape", pos: "verb", def: "逃脫", ex: "The bird escaped from the cage. (鳥從籠子裡逃走了。)" },
+            { word: "especially", pos: "adv.", def: "特別地", ex: "I like fruit, especially apples. (我喜歡水果，特別是蘋果。)" },
+            { word: "essay", pos: "noun", def: "文章、論文", ex: "Write an essay about your holiday. (寫一篇關於你假期的文章。)" },
+            { word: "establish", pos: "verb", def: "建立", ex: "The school was established in 1990. (這所學校建立於1990年。)" },
+            { word: "even", pos: "adv./adj.", def: "甚至、平坦的", ex: "Even a child knows that. (甚至連小孩都知道那個。)" },
+            { word: "evening", pos: "noun", def: "傍晚、晚上", ex: "Good evening! (晚安！)" },
+            { word: "event", pos: "noun", def: "事件", ex: "The concert is a big event. (這場演唱會是個大事件。)" },
+            { word: "ever", pos: "adv.", def: "曾經", ex: "Have you ever been to Japan? (你曾經去過日本嗎？)" },
+            { word: "every", pos: "adj.", def: "每一個", ex: "I exercise every day. (我每天運動。)" },
+            { word: "everybody", pos: "pron.", def: "每個人", ex: "Everybody is happy. (每個人都很開心。)" },
+            { word: "everyone", pos: "pron.", def: "每個人", ex: "Everyone needs love. (每個人都需要愛。)" },
+            { word: "everything", pos: "pron.", def: "每件事物", ex: "Everything is ready. (一切都準備好了。)" },
+            { word: "everywhere", pos: "adv.", def: "到處", ex: "I looked everywhere for my keys. (我到處找我的鑰匙。)" },
+            { word: "evidence", pos: "noun", def: "證據", ex: "There is no evidence. (沒有證據。)" },
+            { word: "evil", pos: "adj./noun", def: "邪惡的", ex: "The witch was evil. (那個女巫很邪惡。)" },
+            { word: "exact", pos: "adj.", def: "確切的", ex: "Tell me the exact time. (告訴我確切的時間。)" },
+            { word: "exactly", pos: "adv.", def: "精確地、正是", ex: "That is exactly what I mean. (那正是我的意思。)" },
+            { word: "exam", pos: "noun", def: "考試", ex: "I have a math exam tomorrow. (我明天有數學考試。)" },
+            { word: "example", pos: "noun", def: "例子", ex: "Give me an example. (給我一個例子。)" },
+            { word: "excellent", pos: "adj.", def: "優秀的", ex: "Good job! Excellent work. (做得好！優秀的作品。)" },
+            { word: "except", pos: "prep.", def: "除了...之外", ex: "Everyone went except me. (除了我之外大家都去了。)" },
+            { word: "exchange", pos: "verb/noun", def: "交換", ex: "We exchanged gifts. (我們交換了禮物。)" },
+            { word: "excite", pos: "verb", def: "使興奮", ex: "The news excited us. (這個消息讓我們很興奮。)" },
+            { word: "excited", pos: "adj.", def: "感到興奮的", ex: "I am excited about the trip. (我對這次旅行感到很興奮。)" },
+            { word: "exciting", pos: "adj.", def: "令人興奮的", ex: "The game was exciting. (這場比賽很刺激。)" },
+            { word: "excuse", pos: "verb/noun", def: "原諒、藉口", ex: "Excuse me. (不好意思/借過。)" },
+            { word: "exercise", pos: "noun/verb", def: "運動、練習", ex: "Exercise is good for health. (運動對健康有益。)" },
+            { word: "exhibition", pos: "noun", def: "展覽", ex: "We visited an art exhibition. (我們參觀了一個藝術展覽。)" },
+            { word: "exist", pos: "verb", def: "存在", ex: "Do ghosts exist? (鬼存在嗎？)" },
+            { word: "exit", pos: "noun", def: "出口", ex: "Where is the exit? (出口在哪裡？)" },
+            { word: "expect", pos: "verb", def: "預期、期待", ex: "I expect him to be late. (我預期他會遲到。)" },
+            { word: "expensive", pos: "adj.", def: "昂貴的", ex: "This car is too expensive. (這輛車太貴了。)" },
+            { word: "experience", pos: "noun/verb", def: "經驗", ex: "He has a lot of experience. (他有很多經驗。)" },
+            { word: "experiment", pos: "noun", def: "實驗", ex: "The scientist did an experiment. (科學家做了一個實驗。)" },
+            { word: "expert", pos: "noun", def: "專家", ex: "She is an expert on birds. (她是鳥類專家。)" },
+            { word: "explain", pos: "verb", def: "解釋", ex: "Can you explain the rule? (你能解釋這個規則嗎？)" },
+            { word: "express", pos: "verb", def: "表達", ex: "Express your feelings. (表達你的感受。)" },
+            { word: "extra", pos: "adj.", def: "額外的", ex: "I have an extra ticket. (我有一張多餘的票。)" },
+            { word: "eye", pos: "noun", def: "眼睛", ex: "Close your eyes. (閉上你的眼睛。)" },
+            { word: "eyebrow", pos: "noun", def: "眉毛", ex: "He raised his eyebrows. (他挑起了眉毛。)" }
+        ];
+
+        let currentIndex = 0;
+        let activeList = []; 
+        
+        let cardElement, wordEl, posEl, defEl, sentenceEl;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            cardElement = document.getElementById('card');
+            wordEl = document.getElementById('word');
+            posEl = document.getElementById('pos');
+            defEl = document.getElementById('def');
+            sentenceEl = document.getElementById('sentence');
+            
+            loadProgress();
+        });
+
+
+        function loadProgress() {
+            // 使用 masteredWords_E 作為獨立的儲存鍵值
+            const mastered = JSON.parse(localStorage.getItem('masteredWords_E')) || []; 
+            activeList = vocabData.filter(item => !mastered.includes(item.word));
+            
+            if (activeList.length === 0) {
+                showEmptyState();
+            } else {
+                document.getElementById('card-container').style.display = 'block';
+                document.getElementById('controls').style.display = 'flex';
+                document.getElementById('empty-state').style.display = 'none';
+                document.querySelector('.progress').style.display = 'block';
+                renderCard();
+            }
+            updateCount();
+        }
+
+        
+        function renderCard() {
+            if (activeList.length === 0) return;
+            
+            if (currentIndex >= activeList.length) currentIndex = 0;
+            if (currentIndex < 0) currentIndex = activeList.length - 1;
+
+            const item = activeList[currentIndex];
+            wordEl.textContent = item.word;
+            posEl.textContent = item.pos;
+            defEl.textContent = item.def;
+            sentenceEl.innerHTML = item.ex.replace(/\n/g, "<br>");
+            
+            cardElement.classList.remove('is-flipped');
+        }
+
+        function flipCard() {
+            speechSynthesis.cancel();
+            if (cardElement) {
+               cardElement.classList.toggle('is-flipped');
+            }
+        }
+
+        function playAudio(event) {
+            event.stopPropagation();
+
+            if (activeList.length === 0) return;
+
+            const word = activeList[currentIndex].word;
+            
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US'; 
+            utterance.rate = 0.8; 
+
+            speechSynthesis.speak(utterance);
+        }
+
+        function nextCard() {
+            currentIndex++;
+            renderCard();
+            updateCount();
+        }
+
+        function prevCard() {
+            currentIndex--;
+            renderCard();
+            updateCount();
+        }
+
+        function markMastered() {
+            if (activeList.length === 0) return;
+            
+            const currentWord = activeList[currentIndex].word;
+            
+            let mastered = JSON.parse(localStorage.getItem('masteredWords_E')) || [];
+            if (!mastered.includes(currentWord)) {
+                mastered.push(currentWord);
+                localStorage.setItem('masteredWords_E', JSON.stringify(mastered));
+            }
+
+            activeList.splice(currentIndex, 1);
+            
+            if (activeList.length === 0) {
+                showEmptyState();
+            } else {
+                renderCard();
+            }
+            updateCount();
+        }
+
+        function markLearning() {
+            nextCard();
+        }
+
+        function showEmptyState() {
+            document.getElementById('card-container').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+            document.querySelector('.progress').style.display = 'none';
+        }
+
+        function resetProgress() {
+            localStorage.removeItem('masteredWords_E');
+            location.reload(); 
+        }
+
+        function confirmReset() {
+            if (confirm("確定要清除所有紀錄，重新練習所有單字嗎？")) {
+                resetProgress();
+            }
+        }
+
+        function updateCount() {
+            document.getElementById('current-index').textContent = activeList.length > 0 ? currentIndex + 1 : 0;
+            document.getElementById('total-count').textContent = activeList.length; 
+        }
+        
+    </script>
+</body>
+</html>

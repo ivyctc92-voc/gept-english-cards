@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多巴胺英語單字卡 - 字母B</title>
+    <style>
+        :root {
+            /* 多巴胺色票 Dopamine Palette */
+            --bg-color: #FFFBEB; /* 柔和黃底 */
+            --card-front: #FFDE59; /* 亮黃 */
+            --card-back: #7ED957; /* 鮮綠 */
+            --text-primary: #333;
+            --btn-master: #FF5757; /* 珊瑚紅 */
+            --btn-learn: #5CE1E6; /* 亮青 */
+            --btn-arrow: #CB6CE6; /* 紫色 */
+            --btn-reset: #FF9F1C; /* 鮮橘色 */
+        }
+
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 右上角重置按鈕 */
+        .reset-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--btn-reset);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+            z-index: 100;
+        }
+
+        .reset-btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        /* 卡片容器與翻轉效果 */
+        .card-container {
+            width: 90%;
+            max-width: 400px;
+            height: 500px;
+            perspective: 1000px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 30px;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            border: 5px solid #fff;
+        }
+
+        /* 正面設計 */
+        .card-front {
+            background-color: var(--card-front);
+            color: var(--text-primary);
+        }
+
+        /* 喇叭圖示樣式 */
+        .speaker-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 3rem; /* 圖示大小 */
+            cursor: pointer;
+            background: rgba(255,255,255,0.4);
+            width: 60px;
+            height: 60px;
+            line-height: 60px;
+            border-radius: 50%;
+            transition: transform 0.2s, background 0.2s;
+            z-index: 50; /* 確保它在最上層 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .speaker-icon:hover {
+            transform: scale(1.1);
+            background: rgba(255,255,255,0.8);
+        }
+
+        .speaker-icon:active {
+            transform: scale(0.95);
+        }
+
+        .english-word {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #FF6B6B;
+            text-shadow: 2px 2px 0px #FFF;
+        }
+
+        .pos-tag {
+            background: #FFF;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #555;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+        }
+
+        /* 背面設計 */
+        .card-back {
+            background-color: var(--card-back);
+            color: var(--text-primary);
+            transform: rotateY(180deg);
+        }
+
+        .chinese-def {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #FFF;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        .example-sentence {
+            font-size: 1.4rem;
+            line-height: 1.6;
+            background: rgba(255,255,255,0.3);
+            padding: 15px;
+            border-radius: 15px;
+            white-space: pre-wrap; /* 讓例句中的換行符號生效 */
+        }
+
+        /* 控制區 */
+        .controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            width: 90%;
+            max-width: 400px;
+            justify-content: space-between;
+        }
+
+        .arrow-btn {
+            background: var(--btn-arrow);
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+
+        .action-btn {
+            border: none;
+            padding: 15px 25px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+            flex: 1;
+        }
+
+        .btn-master { background-color: var(--btn-master); }
+        .btn-learn { background-color: var(--btn-learn); color: #333; }
+        
+        button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .progress {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: #888;
+        }
+        
+        .empty-state {
+            display: none;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+    </style>
+</head>
+<body>
+
+    <button class="reset-btn" onclick="confirmReset()">🔄 全部重來</button>
+
+    <div class="progress">進度：<span id="current-index">0</span> / <span id="total-count">99</span></div>
+
+    <div class="card-container" id="card-container" onclick="flipCard()">
+        <div class="card" id="card">
+            <div class="card-face card-front">
+                <div class="speaker-icon" onclick="playAudio(event)">🔊</div>
+                
+                <div class="english-word" id="word"></div>
+                <div class="pos-tag" id="pos"></div>
+                <div style="margin-top:20px; font-size: 0.9rem; opacity: 0.7;">(點擊卡片翻面)</div>
+            </div>
+            <div class="card-face card-back">
+                <div class="chinese-def" id="def"></div>
+                <div class="example-sentence" id="sentence"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="empty-state" id="empty-state">
+        <h2>🎉 太棒了！</h2>
+        <p>所有單字都已精熟！</p>
+        <button class="action-btn btn-learn" onclick="resetProgress()">重新開始</button>
+    </div>
+
+    <div class="controls" id="controls">
+        <button class="arrow-btn" onclick="prevCard()">&#8592;</button>
+        <button class="action-btn btn-master" onclick="markMastered()">💖 已精熟</button>
+        <button class="action-btn btn-learn" onclick="markLearning()">💪 學習中</button>
+        <button class="arrow-btn" onclick="nextCard()">&#8594;</button>
+    </div>
+
+    <script>
+        // 資料來源：從您的「字母b.docx」檔案中擷取 99 個單字
+        const vocabData = [
+            { word: "baby", pos: "noun", def: "嬰兒", ex: "The  baby  is crying. (嬰兒在哭。)" },
+            { word: "babysit", pos: "verb", def: "當臨時保母", ex: "Can you  babysit  for us tonight? (你今晚能幫我們帶小孩嗎？)" },
+            { word: "back", pos: "noun/adv.", def: "背部、向後", ex: "My  back  hurts. (我的背很痛。)" },
+            { word: "backward", pos: "adv.", def: "向後地", ex: "He looked  backward . (他向後看。)" },
+            { word: "bad", pos: "adj.", def: "壞的", ex: "That is a  bad  idea. (那是個壞主意。)" },
+            { word: "badly", pos: "adv.", def: "嚴重地、壞地", ex: "He was treated  badly . (他受到惡劣的對待。)" },
+            { word: "bag", pos: "noun", def: "袋子", ex: "I lost my  bag . (我弄丟了我的袋子。)" },
+            { word: "bake", pos: "verb", def: "烘烤", ex: "I like to  bake  cookies. (我喜歡烤餅乾。)" },
+            { word: "bakery", pos: "noun", def: "麵包店", ex: "The  bakery  smells good. (這家麵包店聞起來很香。)" },
+            { word: "balcony", pos: "noun", def: "陽台", ex: "She is standing on the  balcony . (她站在陽台上。)" },
+            { word: "ball", pos: "noun", def: "球", ex: "Throw the  ball  to me. (把球丟給我。)" },
+            { word: "balloon", pos: "noun", def: "氣球", ex: "The child held a red  balloon . (小孩拿著一個紅氣球。)" },
+            { word: "banana", pos: "noun", def: "香蕉", ex: "Monkeys love  bananas . (猴子愛吃香蕉。)" },
+            { word: "band", pos: "noun", def: "樂團", ex: "They started a rock  band . (他們組了一個搖滾樂團。)" },
+            { word: "bank", pos: "noun", def: "銀行", ex: "I need to go to the  bank . (我需要去銀行。)" },
+            { word: "bar", pos: "noun", def: "條、酒吧", ex: "He ate a chocolate  bar . (他吃了一條巧克力。)" },
+            { word: "barbecue", pos: "noun/verb", def: "烤肉", ex: "Let's have a  barbecue  this weekend. (我們這週末烤肉吧。)" },
+            { word: "barber", pos: "noun", def: "理髮師", ex: "The  barber  cut my hair. (理髮師剪了我的頭髮。)" },
+            { word: "bark", pos: "verb", def: "吠叫", ex: "The dog  barks  loudly. (那隻狗叫很大聲。)" },
+            { word: "base", pos: "noun", def: "基礎、壘包", ex: "He ran to first  base . (他跑向一壘。)" },
+            { word: "baseball", pos: "noun", def: "棒球", ex: "Let's play  baseball . (我們來打棒球吧。)" },
+            { word: "basement", pos: "noun", def: "地下室", ex: "The car is in the  basement . (車子在地下室。)" },
+            { word: "basic", pos: "adj.", def: "基本的", ex: "We need  basic  tools. (我們需要基本工具。)" },
+            { word: "basket", pos: "noun", def: "籃子", ex: "Put the apples in the  basket . (把蘋果放進籃子裡。)" },
+            { word: "basketball", pos: "noun", def: "籃球", ex: "He is good at  basketball . (他擅長打籃球。)" },
+            { word: "bat", pos: "noun", def: "球棒、蝙蝠", ex: "He hit the ball with a  bat . (他用球棒擊球。)" },
+            { word: "bath", pos: "noun", def: "澡", ex: "I take a  bath  every night. (我每晚都泡澡。)" },
+            { word: "bathroom", pos: "noun", def: "浴室、廁所", ex: "May I use the  bathroom ? (我可以借用廁所嗎？)" },
+            { word: "beach", pos: "noun", def: "海灘", ex: "We walked on the  beach . (我們在海灘上散步。)" },
+            { word: "bean", pos: "noun", def: "豆子", ex: "I like green  beans . (我喜歡四季豆。)" },
+            { word: "bear", pos: "noun", def: "熊", ex: "We saw a  bear  at the zoo. (我們在動物園看到一隻熊。)" },
+            { word: "beautiful", pos: "adj.", def: "美麗的", ex: "The flower is  beautiful . (這朵花很美。)" },
+            { word: "because", pos: "conj.", def: "因為", ex: "I am happy  because  I passed the test. (我很開心因為我通過考試了。)" },
+            { word: "become", pos: "verb", def: "變成", ex: "He wants to  become  a doctor. (他想成為一位醫生。)" },
+            { word: "bed", pos: "noun", def: "床", ex: "It is time for  bed . (該上床睡覺了。)" },
+            { word: "bedroom", pos: "noun", def: "臥室", ex: "My  bedroom  is small but cozy. (我的臥室雖小但很舒適。)" },
+            { word: "bee", pos: "noun", def: "蜜蜂", ex: "A  bee  is flying around the flower. (一隻蜜蜂在花朵旁飛舞。)" },
+            { word: "beef", pos: "noun", def: "牛肉", ex: "I don't eat  beef . (我不吃牛肉。)" },
+            { word: "beer", pos: "noun", def: "啤酒", ex: "He drank a glass of  beer . (他喝了一杯啤酒。)" },
+            { word: "before", pos: "prep./adv.", def: "在...之前", ex: "Wash your hands  before  dinner. (晚餐前要洗手。)" },
+            { word: "begin", pos: "verb", def: "開始", ex: "Let's  begin  the class. (我們開始上課吧。)" },
+            { word: "behind", pos: "prep.", def: "在...後面", ex: "The cat is  behind  the sofa. (貓在沙發後面。)" },
+            { word: "believe", pos: "verb", def: "相信", ex: "I  believe  in you. (我相信你。)" },
+            { word: "bell", pos: "noun", def: "鈴", ex: "The school  bell  rang. (學校鐘聲響了。)" },
+            { word: "belong", pos: "verb", def: "屬於", ex: "This book  belongs  to me. (這本書是我的。)" },
+            { word: "below", pos: "prep./adv.", def: "在...下方", ex: "Please sign your name  below . (請在下方簽名。)" },
+            { word: "bench", pos: "noun", def: "長椅", ex: "We sat on a  bench  in the park. (我們坐在公園的長椅上。)" },
+            { word: "beside", pos: "prep.", def: "在...旁邊", ex: "Sit  beside  me. (坐我旁邊。)" },
+            { word: "best", pos: "adj./adv.", def: "最好的", ex: "She is my  best  friend. (她是我最好的朋友。)" },
+            { word: "better", pos: "adj./adv.", def: "較好的", ex: "I feel much  better  now. (我現在感覺好多了。)" },
+            { word: "between", pos: "prep.", def: "在...之間", ex: "The shop is  between  the bank and the park. (商店在銀行和公園之間。)" },
+            { word: "beyond", pos: "prep.", def: "超越", ex: "That is  beyond  my ability. (那超出了我的能力範圍。)" },
+            { word: "bicycle", pos: "noun", def: "腳踏車", ex: "He rides a  bicycle  to school. (他騎腳踏車上學。)" },
+            { word: "big", pos: "adj.", def: "大的", ex: "Elephants are very  big . (大象非常大。)" },
+            { word: "bike", pos: "noun", def: "腳踏車", ex: "Let's go for a  bike  ride. (我們去騎腳踏車吧。)" },
+            { word: "bill", pos: "noun", def: "帳單", ex: "Can I have the  bill , please? (請給我帳單好嗎？) "},
+            { word: "bird", pos: "noun", def: "鳥", ex: "The  bird  is singing. (鳥兒在唱歌。)" },
+            { word: "birth", pos: "noun", def: "出生", ex: "What is your date of  birth ? (你的出生日期是幾號？)" },
+            { word: "birthday", pos: "noun", def: "生日", ex: "Happy  birthday ! (生日快樂！)" },
+            { word: "bite", pos: "verb", def: "咬", ex: "The dog might  bite . (那隻狗可能會咬人。)" },
+            { word: "black", pos: "adj./noun", def: "黑色的", ex: "I have a  black  cat. (我有一隻黑貓。)" },
+            { word: "blackboard", pos: "noun", def: "黑板", ex: "The teacher wrote on the  blackboard . (老師寫在黑板上。)" },
+            { word: "blanket", pos: "noun", def: "毛毯", ex: "It's cold, I need a  blanket . (好冷，我需要一條毯子。) "},
+            { word: "blind", pos: "adj.", def: "瞎的", ex: "He helps  blind  people cross the street. (他幫助盲人過馬路。)" },
+            { word: "block", pos: "noun/verb", def: "街區；阻擋", ex: "Walk two  blocks  and turn left. (走兩個街區然後左轉。)" },
+            { word: "blood", pos: "noun", def: "血", ex: "Blood  is red. (血是紅色的。)" },
+            { word: "blow", pos: "verb", def: "吹", ex: "The wind is  blowing . (風正在吹。)" },
+            { word: "blue", pos: "adj./noun", def: "藍色的", ex: "The sky is  blue . (天空是藍色的。)" },
+            { word: "boat", pos: "noun", def: "船 (小船)", ex: "They rowed the  boat  across the lake. (他們划船過湖。)" },
+            { word: "body", pos: "noun", def: "身體", ex: "Exercise is good for your  body . (運動對身體有益。)" },
+            { word: "boil", pos: "verb", def: "煮沸", ex: "Please  boil  some water. (請煮點水。)" },
+            { word: "bomb", pos: "noun", def: "炸彈", ex: "The  bomb  exploded. (炸彈爆炸了。)" },
+            { word: "bone", pos: "noun", def: "骨頭", ex: "The dog is chewing a  bone . (狗正在啃骨頭。)" },
+            { word: "book", pos: "noun", def: "書", ex: "I love reading  books . (我愛看書。)" },
+            { word: "bookstore", pos: "noun", def: "書店", ex: "I bought a pen at the  bookstore . (我在書店買了一枝筆。)" },
+            { word: "bored", pos: "adj.", def: "感到無聊的", ex: "I am  bored . (我覺得好無聊。)" },
+            { word: "boring", pos: "adj.", def: "令人的無聊的", ex: "This movie is  boring . (這部電影很無聊。)" },
+            { word: "born", pos: "verb", def: "出生", ex: "I was  born  in Taipei. (我在台北出生。)" },
+            { word: "borrow", pos: "verb", def: "借入", ex: "Can I  borrow  your pen? (我可以借你的筆嗎？)" },
+            { word: "boss", pos: "noun", def: "老闆", ex: "My  boss  is very kind. (我的老闆很親切。)" },
+            { word: "both", pos: "adj./pron.", def: "兩者都", ex: "Both  of them are my friends. (他們兩個都是我的朋友。)" },
+            { word: "bother", pos: "verb", def: "打擾", ex: "Don't  bother  me while I'm studying. (我讀書時別打擾我。)" },
+            { word: "bottle", pos: "noun", def: "瓶子", ex: "I drank a  bottle  of water. (我喝了一瓶水。)" },
+            { word: "bottom", pos: "noun", def: "底部", ex: "Sign at the  bottom  of the page. (在頁面底部簽名。)" },
+            { word: "bow", pos: "verb/noun", def: "鞠躬", ex: "They  bowed  to the teacher. (他們向老師鞠躬。)" },
+            { word: "bowl", pos: "noun", def: "碗", ex: "I ate a  bowl  of rice. (我吃了一碗飯。)" },
+            { word: "box", pos: "noun", def: "盒子", ex: "What is inside the  box ? (盒子裡有什麼？)" },
+            { word: "boy", pos: "noun", def: "男孩", ex: "The  boy  is playing soccer. (那個男孩正在踢足球。)" },
+            { word: "bread", pos: "noun", def: "麵包", ex: "I eat  bread  for breakfast. (我早餐吃麵包。)" },
+            { word: "break", pos: "verb/noun", def: "打破；休息", ex: "Don't  break  the glass. (不要打破玻璃。)" },
+            { word: "breakfast", pos: "noun", def: "早餐", ex: "I had eggs for  breakfast . (我早餐吃了蛋。)" },
+            { word: "bridge", pos: "noun", def: "橋", ex: "We crossed the  bridge . (我們過了橋。)" },
+            { word: "bright", pos: "adj.", def: "明亮的", ex: "The sun is very  bright . (太陽非常耀眼。)" },
+            { word: "bring", pos: "verb", def: "帶來", ex: "Please  bring  me a cup of water. (請拿一杯水給我。)" },
+            { word: "brother", pos: "noun", def: "兄弟", ex: "I have one  brother . (我有一個兄弟。)" },
+            { word: "brown", pos: "adj./noun", def: "褐色的", ex: "She has  brown  hair. (她有褐色的頭髮。)" },
+            { word: "brush", pos: "verb/noun", def: "刷", ex: "Brush  your teeth every day. (每天都要刷牙。)" },
+            { word: "build", pos: "verb", def: "建造", ex: "They will  build  a new house. (他們將建造一棟新房子。)" },
+            { word: "building", pos: "noun", def: "建築物", ex: "That is a tall  building . (那是一棟高樓。)" },
+            { word: "burn", pos: "verb", def: "燃燒", ex: "The fire is  burning . (火正在燃燒。)" },
+            { word: "bus", pos: "noun", def: "公車", ex: "I take the  bus  to school. (我搭公車上學。)" },
+            { word: "business", pos: "noun", def: "生意、商業", ex: "He is in the computer  business . (他在一家電腦公司工作。)" },
+            { word: "busy", pos: "adj.", def: "忙碌的", ex: "I am very  busy  today. (我今天很忙。)" },
+            { word: "but", pos: "conj.", def: "但是", ex: "It is cheap  but  good. (它很便宜但是很好。)" },
+            { word: "butter", pos: "noun", def: "奶油", ex: "Do you want  butter  on your toast? (你的吐司要塗奶油嗎？)" },
+            { word: "butterfly", pos: "noun", def: "蝴蝶", ex: "The  butterfly  is beautiful. (這隻蝴蝶很美。)" },
+            { word: "buy", pos: "verb", def: "買", ex: "I want to  buy  a new car. (我想買一輛新車。)" },
+            { word: "by", pos: "prep.", def: "藉由、在旁邊", ex: "I go to school  by  bus. (我搭公車去上學。)" }
+        ];
+
+        let currentIndex = 0;
+        let activeList = []; 
+        
+        let cardElement, wordEl, posEl, defEl, sentenceEl;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            cardElement = document.getElementById('card');
+            wordEl = document.getElementById('word');
+            posEl = document.getElementById('pos');
+            defEl = document.getElementById('def');
+            sentenceEl = document.getElementById('sentence');
+            
+            loadProgress();
+        });
+
+
+        function loadProgress() {
+            // 注意：這裡將 key 改為 masteredWords_B
+            const mastered = JSON.parse(localStorage.getItem('masteredWords_B')) || []; 
+            activeList = vocabData.filter(item => !mastered.includes(item.word));
+            
+            if (activeList.length === 0) {
+                showEmptyState();
+            } else {
+                document.getElementById('card-container').style.display = 'block';
+                document.getElementById('controls').style.display = 'flex';
+                document.getElementById('empty-state').style.display = 'none';
+                document.querySelector('.progress').style.display = 'block';
+                renderCard();
+            }
+            updateCount();
+        }
+
+        
+        function renderCard() {
+            if (activeList.length === 0) return;
+            
+            if (currentIndex >= activeList.length) currentIndex = 0;
+            if (currentIndex < 0) currentIndex = activeList.length - 1;
+
+            const item = activeList[currentIndex];
+            wordEl.textContent = item.word;
+            posEl.textContent = item.pos;
+            defEl.textContent = item.def;
+            sentenceEl.innerHTML = item.ex.replace(/\n/g, "<br>");
+            
+            cardElement.classList.remove('is-flipped');
+        }
+
+        function flipCard() {
+            speechSynthesis.cancel();
+            if (cardElement) {
+               cardElement.classList.toggle('is-flipped');
+            }
+        }
+
+        function playAudio(event) {
+            event.stopPropagation();
+
+            if (activeList.length === 0) return;
+
+            const word = activeList[currentIndex].word;
+            
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US'; 
+            utterance.rate = 0.8; 
+
+            speechSynthesis.speak(utterance);
+        }
+
+        function nextCard() {
+            currentIndex++;
+            renderCard();
+            updateCount();
+        }
+
+        function prevCard() {
+            currentIndex--;
+            renderCard();
+            updateCount();
+        }
+
+        function markMastered() {
+            if (activeList.length === 0) return;
+            
+            const currentWord = activeList[currentIndex].word;
+            
+            let mastered = JSON.parse(localStorage.getItem('masteredWords_B')) || [];
+            if (!mastered.includes(currentWord)) {
+                mastered.push(currentWord);
+                localStorage.setItem('masteredWords_B', JSON.stringify(mastered));
+            }
+
+            activeList.splice(currentIndex, 1);
+            
+            if (activeList.length === 0) {
+                showEmptyState();
+            } else {
+                renderCard();
+            }
+            updateCount();
+        }
+
+        function markLearning() {
+            nextCard();
+        }
+
+        function showEmptyState() {
+            document.getElementById('card-container').style.display = 'none';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+            document.querySelector('.progress').style.display = 'none';
+        }
+
+        function resetProgress() {
+            localStorage.removeItem('masteredWords_B');
+            location.reload(); 
+        }
+
+        function confirmReset() {
+            if (confirm("確定要清除所有紀錄，重新練習所有單字嗎？")) {
+                resetProgress();
+            }
+        }
+
+        function updateCount() {
+            document.getElementById('current-index').textContent = activeList.length > 0 ? currentIndex + 1 : 0;
+            // 【重要修正】這裡改為顯示 activeList 的長度
+            document.getElementById('total-count').textContent = activeList.length; 
+        }
+        
+    </script>
+</body>
+</html>
