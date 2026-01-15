@@ -1,0 +1,441 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GEPT Level H - 多巴胺單字卡 V8</title>
+    <style>
+        :root {
+            --bg-color: #F8F9FA;
+            --pink: #FF6B95;
+            --yellow: #FFD93D;
+            --green: #6BCB77;
+            --blue: #4D96FF;
+            --purple: #A29BFE;
+            --orange: #FF9F43;
+            --text-color: #2D3436;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 420px;
+            margin-bottom: 8px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: #EEE;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--yellow));
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .flashcard-container {
+            width: 420px;
+            height: 320px;
+            perspective: 1000px;
+            margin-bottom: 15px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flashcard.flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-front {
+            background-color: white;
+            border: 10px solid var(--pink);
+        }
+
+        .word-text {
+            font-weight: 900;
+            color: var(--pink);
+            margin: 0;
+            line-height: 1.1;
+            white-space: nowrap;
+        }
+
+        .pos-text {
+            font-size: 20px;
+            color: #AAA;
+            font-style: italic;
+            margin-top: 8px;
+        }
+
+        .card-back {
+            background-color: var(--blue);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .def-text {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--yellow);
+        }
+
+        .sentence-en {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .sentence-zh {
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 12px;
+        }
+
+        .speak-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 42px;
+            height: 42px;
+            font-size: 22px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            width: 420px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .nav-btn, .status-btn {
+            height: 50px;
+            border: 3px solid var(--text-color);
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.1s;
+        }
+
+        .nav-btn {
+            width: 55px;
+            font-size: 22px;
+            background-color: var(--purple);
+            color: white;
+        }
+
+        .nav-btn.next { background-color: var(--yellow); color: var(--text-color); }
+
+        .status-btn { flex: 1; font-size: 16px; }
+
+        .btn-mastered { background-color: var(--green); color: white; }
+        .btn-learning { background-color: white; color: var(--text-color); }
+
+        .nav-btn:active, .status-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--text-color);
+        }
+
+        #success-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        @media (max-width: 430px) {
+            .flashcard-container, .controls, .header { width: 95vw; }
+            .flashcard-container { height: 75vw; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" id="header-ui">
+        <div class="progress-info">
+            <span id="progress-text">0 / 99</span>
+            <span onclick="resetAll()" style="font-size: 12px; cursor:pointer; color: #888;">↺ 全部重來</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <div id="learning-ui">
+        <div class="flashcard-container">
+            <div class="flashcard" id="card" onclick="flipCard()">
+                <div class="card-face card-front">
+                    <button class="speak-btn" onclick="speakWord(event)">🔊</button>
+                    <p class="word-text" id="word-display">Word</p>
+                    <p class="pos-text" id="pos-display">(pos)</p>
+                </div>
+                <div class="card-face card-back" id="card-back-face">
+                    <button class="speak-btn" onclick="speakSentence(event)" style="border: 1px solid #eee;">🔊</button>
+                    <p class="def-text" id="def-display">定義</p>
+                    <p class="sentence-en" id="sentence-en-display">Sentence.</p>
+                    <p class="sentence-zh" id="sentence-zh-display">翻譯</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="nav-btn" onclick="prevCard()">⬅</button>
+            <button class="status-btn btn-mastered" onclick="markMastered()">已精熟</button>
+            <button class="status-btn btn-learning" onclick="nextCard()">學習中</button>
+            <button class="nav-btn next" onclick="nextCard()">➡</button>
+        </div>
+    </div>
+
+    <div id="success-screen">
+        <h1 style="color: var(--pink);">太棒了！🎉</h1>
+        <p>H 群組單字已全部熟記！</p>
+        <button class="status-btn" onclick="resetAll()" style="width: 150px; margin-top: 15px;">重新開始</button>
+    </div>
+
+    <script>
+        const wordData = [
+            { word: "habit", pos: "noun", def: "習慣", sentence: "Biting nails is a bad habit.", translation: "咬指甲是個壞習慣。" },
+            { word: "hair", pos: "noun", def: "頭髮", sentence: "She has long black hair.", translation: "她有長長的黑髮。" },
+            { word: "haircut", pos: "noun", def: "理髮", sentence: "I need to get a haircut.", translation: "我需要去剪頭髮。" },
+            { word: "half", pos: "n/adj/adv", def: "一半", sentence: "Please give me half of the apple.", translation: "請給我一半的蘋果。" },
+            { word: "hall", pos: "noun", def: "大廳、禮堂", sentence: "The meeting is in the hall.", translation: "會議在大廳舉行。" },
+            { word: "Halloween", pos: "noun", def: "萬聖節", sentence: "Kids love Halloween.", translation: "孩子們喜愛萬聖節。" },
+            { word: "ham", pos: "noun", def: "火腿", sentence: "I like ham sandwiches.", translation: "我喜歡火腿三明治。" },
+            { word: "hamburger", pos: "noun", def: "漢堡", sentence: "He ordered a hamburger and fries.", translation: "他點了一個漢堡和薯條。" },
+            { word: "hand", pos: "n/v", def: "手；傳遞", sentence: "Raise your hand if you know the answer.", translation: "知道答案請舉手。" },
+            { word: "handkerchief", pos: "noun", def: "手帕", sentence: "He wiped his face with a handkerchief.", translation: "他用手帕擦臉。" },
+            { word: "handle", pos: "v/n", def: "處理；把手", sentence: "I can handle this problem.", translation: "我可以處理這個問題。" },
+            { word: "handsome", pos: "adj.", def: "英俊的", sentence: "He is a handsome man.", translation: "他是個英俊的男子。" },
+            { word: "hang", pos: "verb", def: "懸掛", sentence: "Please hang your coat here.", translation: "請把外套掛在這裡。" },
+            { word: "hanger", pos: "noun", def: "衣架", sentence: "Do you have a hanger for my shirt?", translation: "你有衣架掛我的襯衫嗎？" },
+            { word: "happen", pos: "verb", def: "發生", sentence: "What happened to you?", translation: "你發生什麼事了？" },
+            { word: "happy", pos: "adj.", def: "快樂的", sentence: "She looks very happy.", translation: "她看起來很快樂。" },
+            { word: "hard", pos: "adj/adv", def: "困難的、硬的", sentence: "The rock is very hard.", translation: "這顆石頭很硬。" },
+            { word: "hardly", pos: "adv.", def: "幾乎不", sentence: "I can hardly hear you.", translation: "我幾乎聽不到你的聲音。" },
+            { word: "hat", pos: "noun", def: "帽子", sentence: "Put on your hat.", translation: "戴上你的帽子。" },
+            { word: "hate", pos: "v/n", def: "討厭", sentence: "I hate waking up early.", translation: "我討厭早起。" },
+            { word: "have", pos: "verb", def: "有；吃、喝", sentence: "I have a pen.", translation: "我有一枝筆。" },
+            { word: "he", pos: "pron.", def: "他", sentence: "He is my brother.", translation: "他是我的兄弟。" },
+            { word: "head", pos: "n/v", def: "頭；前往", sentence: "My head hurts.", translation: "我的頭很痛。" },
+            { word: "headache", pos: "noun", def: "頭痛", sentence: "I have a bad headache.", translation: "我頭痛得很厲害。" },
+            { word: "health", pos: "noun", def: "健康", sentence: "Health is wealth.", translation: "健康就是財富。" },
+            { word: "healthy", pos: "adj.", def: "健康的", sentence: "Eating vegetables is healthy.", translation: "吃蔬菜很健康。" },
+            { word: "hear", pos: "verb", def: "聽見", sentence: "Can you hear the music?", translation: "你聽得到音樂嗎？" },
+            { word: "heart", pos: "noun", def: "心臟、心", sentence: "She has a kind heart.", translation: "她有一顆善良的心。" },
+            { word: "heat", pos: "n/v", def: "熱度；加熱", sentence: "I can't stand the heat.", translation: "我受不了這個熱度。" },
+            { word: "heater", pos: "noun", def: "暖氣機", sentence: "Turn on the heater, please.", translation: "請把暖氣打開。" },
+            { word: "heavy", pos: "adj.", def: "重的", sentence: "This box is too heavy.", translation: "這個箱子太重了。" },
+            { word: "height", pos: "noun", def: "高度、身高", sentence: "What is your height?", translation: "你的身高是多少？" },
+            { word: "helicopter", pos: "noun", def: "直昇機", sentence: "The helicopter is flying low.", translation: "直昇機飛得很低。" },
+            { word: "hello", pos: "n/int", def: "哈囉", sentence: "She said hello to me.", translation: "她跟我打招呼。" },
+            { word: "help", pos: "v/n", def: "幫忙", sentence: "Can you help me?", translation: "你可以幫我嗎？" },
+            { word: "helpful", pos: "adj.", def: "有幫助的", sentence: "Your advice was very helpful.", translation: "你的建議很有幫助。" },
+            { word: "hen", pos: "noun", def: "母雞", sentence: "The hen laid an egg.", translation: "母雞下了一顆蛋。" },
+            { word: "her", pos: "det/pron", def: "她、她的", sentence: "This is her book.", translation: "這是她的書。" },
+            { word: "here", pos: "adv.", def: "這裡", sentence: "Come here.", translation: "過來這裡。" },
+            { word: "hero", pos: "noun", def: "英雄", sentence: "Superman is a hero.", translation: "超人是英雄。" },
+            { word: "heroine", pos: "noun", def: "女英雄", sentence: "She is the heroine of the story.", translation: "她是故事中的女英雄。" },
+            { word: "hers", pos: "pron.", def: "她的(東西)", sentence: "This bag is hers.", translation: "這個包包是她的。" },
+            { word: "herself", pos: "pron.", def: "她自己", sentence: "She looked at herself in the mirror.", translation: "她看著鏡子裡的自己。" },
+            { word: "hey", pos: "interj.", def: "喂", sentence: "Hey! Wait for me.", translation: "喂！等等我。" },
+            { word: "hi", pos: "interj.", def: "嗨", sentence: "Hi, how are you?", translation: "嗨，你好嗎？" },
+            { word: "hide", pos: "verb", def: "躲藏", sentence: "The cat likes to hide under the bed.", translation: "貓喜歡躲在床底下。" },
+            { word: "high", pos: "adj/adv", def: "高的", sentence: "The mountain is very high.", translation: "這座山很高。" },
+            { word: "highway", pos: "noun", def: "公路", sentence: "We drove on the highway.", translation: "我們在公路上開車。" },
+            { word: "hike", pos: "n/v", def: "健行", sentence: "Let's go for a hike.", translation: "我們去健行吧。" },
+            { word: "hill", pos: "noun", def: "丘陵、小山", sentence: "They ran up the hill.", translation: "他們跑上小山丘。" },
+            { word: "him", pos: "pron.", def: "他(受格)", sentence: "I saw him yesterday.", translation: "我昨天看見他。" },
+            { word: "himself", pos: "pron.", def: "他自己", sentence: "He cooked dinner by himself.", translation: "他自己煮晚餐。" },
+            { word: "hip", pos: "noun", def: "臀部", sentence: "She has hands on her hips.", translation: "她手插著腰。" },
+            { word: "hippopotamus", pos: "noun", def: "河馬", sentence: "The hippopotamus is in the water.", translation: "河馬在水裡。" },
+            { word: "hire", pos: "v/n", def: "雇用", sentence: "They decided to hire him.", translation: "他們決定雇用他。" },
+            { word: "his", pos: "det/pron", def: "他的", sentence: "This is his car.", translation: "這是他的車。" },
+            { word: "history", pos: "noun", def: "歷史", sentence: "I enjoy studying history.", translation: "我喜歡讀歷史。" },
+            { word: "hit", pos: "v/n", def: "打擊", sentence: "He hit the ball hard.", translation: "他用力擊球。" },
+            { word: "hobby", pos: "noun", def: "嗜好", sentence: "My hobby is reading.", translation: "我的嗜好是閱讀。" },
+            { word: "hold", pos: "v/n", def: "握住、舉辦", sentence: "Please hold my hand.", translation: "請握住我的手。" },
+            { word: "hole", pos: "noun", def: "洞", sentence: "There is a hole in my sock.", translation: "我的襪子有個洞。" },
+            { word: "holiday", pos: "noun", def: "假日", sentence: "We are going on holiday.", translation: "我們要去度假。" },
+            { word: "home", pos: "n/adv", def: "家", sentence: "I want to go home.", translation: "我想回家。" },
+            { word: "homesick", pos: "adj.", def: "想家的", sentence: "I felt homesick when I was abroad.", translation: "我在國外時覺得想家。" },
+            { word: "hometown", pos: "noun", def: "家鄉", sentence: "Tainan is my hometown.", translation: "台南是我的家鄉。" },
+            { word: "homework", pos: "noun", def: "家庭作業", sentence: "I have to do my homework.", translation: "我必須做功課。" },
+            { word: "honest", pos: "adj.", def: "誠實的", sentence: "Be honest with me.", translation: "對我要誠實。" },
+            { word: "honesty", pos: "noun", def: "誠實", sentence: "Honesty is the best policy.", translation: "誠實為上策。" },
+            { word: "honey", pos: "noun", def: "蜂蜜、親愛的", sentence: "Bees make honey.", translation: "蜜蜂製造蜂蜜。" },
+            { word: "Hong Kong", pos: "noun", def: "香港", sentence: "My uncle lives in Hong Kong.", translation: "我叔叔住在香港。" },
+            { word: "hop", pos: "v/n", def: "單腳跳", sentence: "The rabbit hopped away.", translation: "兔子跳走了。" },
+            { word: "hope", pos: "v/n", def: "希望", sentence: "I hope to see you soon.", translation: "我希望很快見到你。" },
+            { word: "horrible", pos: "adj.", def: "可怕的", sentence: "The weather is horrible.", translation: "天氣很糟糕。" },
+            { word: "horse", pos: "noun", def: "馬", sentence: "He can ride a horse.", translation: "他會騎馬。" },
+            { word: "hospital", pos: "noun", def: "醫院", sentence: "The sick man went to the hospital.", translation: "那生病的人去了醫院。" },
+            { word: "host", pos: "n/v", def: "主人", sentence: "He is the host of the party.", translation: "他是派對的主人。" },
+            { word: "hostess", pos: "noun", def: "女主人", sentence: "The hostess welcomed us.", translation: "女主人歡迎我們。" },
+            { word: "hot", pos: "adj.", def: "熱的", sentence: "The soup is very hot.", translation: "湯很燙。" },
+            { word: "hot dog", pos: "noun", def: "熱狗", sentence: "I want a hot dog for lunch.", translation: "我午餐想吃熱狗。" },
+            { word: "hotel", pos: "noun", def: "旅館", sentence: "We stayed at a nice hotel.", translation: "我們住在一間很棒的旅館。" },
+            { word: "hour", pos: "noun", def: "小時", sentence: "The movie is two hours long.", translation: "這部電影長兩小時。" },
+            { word: "house", pos: "noun", def: "房子", sentence: "They bought a new house.", translation: "他們買了一棟新房子。" },
+            { word: "how", pos: "adv.", def: "如何", sentence: "How do you do?", translation: "你好嗎？" },
+            { word: "however", pos: "adv/conj", def: "然而", sentence: "I am tired; however, I must finish this.", translation: "我很累，然而我必須完成這個。" },
+            { word: "Hualian", pos: "noun", def: "花蓮", sentence: "Hualian is famous for its scenery.", translation: "花蓮以風景聞名。" },
+            { word: "huge", pos: "adj.", def: "巨大的", sentence: "The elephant is huge.", translation: "大象是巨大的。" },
+            { word: "human", pos: "adj/n", def: "人類的", sentence: "To err is human.", translation: "人非聖賢，孰能無過。" },
+            { word: "humble", pos: "adj.", def: "謙虛的", sentence: "He is a humble man.", translation: "他是個謙虛的人。" },
+            { word: "humid", pos: "adj.", def: "潮濕的", sentence: "It is very humid in summer.", translation: "夏天非常潮濕。" },
+            { word: "humor", pos: "noun", def: "幽默", sentence: "He has a good sense of humor.", translation: "他很有幽默感。" },
+            { word: "humorous", pos: "adj.", def: "幽默的", sentence: "The story is very humorous.", translation: "這個故事很幽默。" },
+            { word: "hundred", pos: "number", def: "一百", sentence: "I have one hundred dollars.", translation: "我有一百元。" },
+            { word: "hunger", pos: "noun", def: "飢餓", sentence: "Many people suffer from hunger.", translation: "許多人遭受飢餓之苦。" },
+            { word: "hungry", pos: "adj.", def: "飢餓的", sentence: "I am very hungry.", translation: "我很餓。" },
+            { word: "hunt", pos: "v/n", def: "打獵", sentence: "Lions hunt for food.", translation: "獅子獵食。" },
+            { word: "hunter", pos: "noun", def: "獵人", sentence: "The hunter caught a rabbit.", translation: "獵人抓到一隻兔子。" },
+            { word: "hurry", pos: "v/n", def: "匆忙", sentence: "Hurry up, or we will be late.", translation: "快點，不然我們會遲到。" },
+            { word: "hurt", pos: "verb", def: "受傷、疼痛", sentence: "Did you hurt yourself?", translation: "你受傷了嗎？" },
+            { word: "husband", pos: "noun", def: "丈夫", sentence: "Her husband is a doctor.", translation: "她的丈夫是醫生。" }
+        ];
+
+        let list = [...wordData];
+        let idx = 0;
+        const colors = ['#FF6B95', '#FFD93D', '#6BCB77', '#4D96FF', '#FF9F43'];
+
+        function update() {
+            if (!list.length) return showSuccess();
+            const item = list[idx];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const wordEl = document.getElementById('word-display');
+            
+            let fontSize = 64; 
+            if (item.word.length > 12) fontSize = 42;
+            else if (item.word.length > 10) fontSize = 52;
+            
+            wordEl.innerText = item.word;
+            wordEl.style.fontSize = fontSize + "px";
+            wordEl.style.color = color;
+            
+            document.getElementById('pos-display').innerText = `(${item.pos})`;
+            document.querySelector('.card-front').style.borderColor = color;
+            
+            document.getElementById('def-display').innerText = item.def;
+            document.getElementById('def-display').style.color = (color === '#FFD93D') ? '#FF6B95' : '#FFD93D';
+            document.getElementById('sentence-en-display').innerText = item.sentence;
+            document.getElementById('sentence-zh-display').innerText = item.translation;
+            document.getElementById('card-back-face').style.backgroundColor = color;
+            
+            document.getElementById('card').classList.remove('flipped');
+            updateProg();
+        }
+
+        function updateProg() {
+            const m = wordData.length - list.length;
+            document.getElementById('progress-fill').style.width = (m / wordData.length * 100) + "%";
+            document.getElementById('progress-text').innerText = `${m} / ${wordData.length}`;
+        }
+
+        function flipCard() { document.getElementById('card').classList.toggle('flipped'); }
+        function nextCard() { idx = (idx + 1) % list.length; update(); }
+        function prevCard() { idx = (idx - 1 + list.length) % list.length; update(); }
+        
+        function markMastered() {
+            list.splice(idx, 1);
+            if (!list.length) return showSuccess();
+            if (idx >= list.length) idx = 0;
+            update();
+        }
+
+        function speakWord(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].word);
+            m.lang = 'en-US';
+            window.speechSynthesis.speak(m);
+        }
+
+        function speakSentence(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].sentence);
+            m.lang = 'en-US';
+            m.rate = 0.8;
+            window.speechSynthesis.speak(m);
+        }
+
+        function showSuccess() {
+            document.getElementById('learning-ui').style.display = 'none';
+            document.getElementById('header-ui').style.display = 'none';
+            document.getElementById('success-screen').style.display = 'flex';
+        }
+
+        function resetAll() {
+            list = [...wordData]; idx = 0;
+            document.getElementById('learning-ui').style.display = 'block';
+            document.getElementById('header-ui').style.display = 'block';
+            document.getElementById('success-screen').style.display = 'none';
+            update();
+        }
+
+        window.onload = update;
+    </script>
+</body>
+</html>
