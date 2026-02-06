@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GEPT Level S - 多巴胺單字卡 V8</title>
+    <style>
+        :root {
+            --bg-color: #F8F9FA;
+            --pink: #FF6B95;
+            --yellow: #FFD93D;
+            --green: #6BCB77;
+            --blue: #4D96FF;
+            --purple: #A29BFE;
+            --orange: #FF9F43;
+            --text-color: #2D3436;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 420px;
+            margin-bottom: 8px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: #EEE;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--yellow));
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .flashcard-container {
+            width: 420px;
+            height: 320px;
+            perspective: 1000px;
+            margin-bottom: 15px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flashcard.flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-front {
+            background-color: white;
+            border: 10px solid var(--pink);
+        }
+
+        .word-text {
+            font-weight: 900;
+            color: var(--pink);
+            margin: 0;
+            line-height: 1.1;
+            white-space: nowrap; 
+        }
+
+        .pos-text {
+            font-size: 20px;
+            color: #AAA;
+            font-style: italic;
+            margin-top: 8px;
+        }
+
+        .card-back {
+            background-color: var(--blue);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .def-text {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--yellow);
+        }
+
+        .sentence-en {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .sentence-zh {
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 12px;
+        }
+
+        .speak-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 42px;
+            height: 42px;
+            font-size: 22px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            width: 420px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .nav-btn, .status-btn {
+            height: 50px;
+            border: 3px solid var(--text-color);
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.1s;
+        }
+
+        .nav-btn {
+            width: 55px;
+            font-size: 22px;
+            background-color: var(--purple);
+            color: white;
+        }
+
+        .nav-btn.next { background-color: var(--yellow); color: var(--text-color); }
+
+        .status-btn { flex: 1; font-size: 16px; }
+
+        .btn-mastered { background-color: var(--green); color: white; }
+        .btn-learning { background-color: white; color: var(--text-color); }
+
+        .nav-btn:active, .status-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--text-color);
+        }
+
+        #success-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        @media (max-width: 430px) {
+            .flashcard-container, .controls, .header { width: 95vw; }
+            .flashcard-container { height: 75vw; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" id="header-ui">
+        <div class="progress-info">
+            <span id="progress-text">0 / 256</span>
+            <span onclick="resetAll()" style="font-size: 12px; cursor:pointer; color: #888;">↺ 全部重來</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <div id="learning-ui">
+        <div class="flashcard-container">
+            <div class="flashcard" id="card" onclick="flipCard()">
+                <div class="card-face card-front">
+                    <button class="speak-btn" onclick="speakWord(event)">🔊</button>
+                    <p class="word-text" id="word-display">Word</p>
+                    <p class="pos-text" id="pos-display">(pos)</p>
+                </div>
+                <div class="card-face card-back" id="card-back-face">
+                    <button class="speak-btn" onclick="speakSentence(event)" style="border: 1px solid #eee;">🔊</button>
+                    <p class="def-text" id="def-display">定義</p>
+                    <p class="sentence-en" id="sentence-en-display">Sentence.</p>
+                    <p class="sentence-zh" id="sentence-zh-display">翻譯</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="nav-btn" onclick="prevCard()">⬅</button>
+            <button class="status-btn btn-mastered" onclick="markMastered()">已精熟</button>
+            <button class="status-btn btn-learning" onclick="nextCard()">學習中</button>
+            <button class="nav-btn next" onclick="nextCard()">➡</button>
+        </div>
+    </div>
+
+    <div id="success-screen">
+        <h1 style="color: var(--pink);">太棒了！🎉</h1>
+        <p>字母 S 的單字已全部熟記！</p>
+        <button class="status-btn" onclick="resetAll()" style="width: 150px; margin-top: 15px;">重新開始</button>
+    </div>
+
+    <script>
+        const wordData = [
+            { word: "sad", pos: "adj.", def: "悲傷的", sentence: "Don't be sad.", translation: "不要難過。" },
+            { word: "safe", pos: "adj.", def: "安全的", sentence: "Is it safe to swim here?", translation: "在這裡游泳安全嗎？" },
+            { word: "safety", pos: "noun", def: "安全", sentence: "Safety comes first.", translation: "安全第一。" },
+            { word: "sail", pos: "verb/noun", def: "航行", sentence: "They sailed across the ocean.", translation: "他們航行橫越海洋。" },
+            { word: "sailor", pos: "noun", def: "水手", sentence: "The sailor works on a ship.", translation: "水手在船上工作。" },
+            { word: "salad", pos: "noun", def: "沙拉", sentence: "I ordered a chicken salad.", translation: "我點了一份雞肉沙拉。" },
+            { word: "sale", pos: "noun", def: "販售、特賣", sentence: "These shoes are on sale.", translation: "這些鞋子在特價。" },
+            { word: "salesman", pos: "noun", def: "業務員", sentence: "He is a car salesman.", translation: "他是汽車業務員。" },
+            { word: "salt", pos: "noun", def: "鹽", sentence: "Please pass the salt.", translation: "請傳鹽給我。" },
+            { word: "same", pos: "adj./pron.", def: "相同的", sentence: "We have the same bag.", translation: "我們有一樣的包包。" },
+            { word: "sample", pos: "noun", def: "樣品", sentence: "Can I try a free sample?", translation: "我可以試吃免費樣品嗎？" },
+            { word: "sand", pos: "noun", def: "沙子", sentence: "The children are playing in the sand.", translation: "孩子們在玩沙。" },
+            { word: "sandwich", pos: "noun", def: "三明治", sentence: "I had a ham sandwich for lunch.", translation: "我午餐吃火腿三明治。" },
+            { word: "satisfy", pos: "verb", def: "使滿意", sentence: "Nothing can satisfy him.", translation: "沒有什麼能讓他滿意。" },
+            { word: "Saturday", pos: "noun", def: "星期六", sentence: "We don't go to school on Saturday.", translation: "我們星期六不用上學。" },
+            { word: "sauce", pos: "noun", def: "醬汁", sentence: "The steak sauce is delicious.", translation: "這牛排醬很好吃。" },
+            { word: "sausage", pos: "noun", def: "香腸", sentence: "I like fried sausages.", translation: "我喜歡炸香腸。" },
+            { word: "save", pos: "verb", def: "拯救、存錢", sentence: "He saved the drowning dog.", translation: "他救了那隻溺水的狗。" },
+            { word: "say", pos: "verb", def: "說", sentence: "What did you say?", translation: "你說了什麼？" },
+            { word: "scale", pos: "noun", def: "磅秤、規模", sentence: "We weigh yourself on the scale.", translation: "在磅秤上量體重。" },
+            { word: "scared", pos: "adj.", def: "害怕的", sentence: "I am scared of ghosts.", translation: "我怕鬼。" },
+            { word: "scarf", pos: "noun", def: "圍巾", sentence: "She wore a wool scarf.", translation: "她圍了一條羊毛圍巾。" },
+            { word: "scene", pos: "noun", def: "景色、場景", sentence: "The movie has a funny scene.", translation: "這部電影有個好笑的場景。" },
+            { word: "scenery", pos: "noun", def: "風景", sentence: "The scenery here is beautiful.", translation: "這裡的風景很美。" },
+            { word: "school", pos: "noun", def: "學校", sentence: "I walk to school.", translation: "我走路上學。" },
+            { word: "science", pos: "noun", def: "科學", sentence: "I like science class.", translation: "我喜歡自然科學課。" },
+            { word: "scientist", pos: "noun", def: "科學家", sentence: "Einstein was a great scientist.", translation: "愛因斯坦是位偉大的科學家。" },
+            { word: "scooter", pos: "noun", def: "機車(踏板式)", sentence: "Many people ride scooters in Taiwan.", translation: "台灣很多人騎機車。" },
+            { word: "score", pos: "noun/verb", def: "分數、得分", sentence: "What is the final score?", translation: "最後比分是多少？" },
+            { word: "screen", pos: "noun", def: "螢幕", sentence: "Don't stare at the screen too long.", translation: "不要盯著螢幕太久。" },
+            { word: "sea", pos: "noun", def: "海", sentence: "The sea is calm today.", translation: "今天海面很平靜。" },
+            { word: "seafood", pos: "noun", def: "海鮮", sentence: "Do you like seafood?", translation: "你喜歡海鮮嗎？" },
+            { word: "search", pos: "verb/noun", def: "搜尋", sentence: "I searched for my keys everywhere.", translation: "我到處找我的鑰匙。" },
+            { word: "season", pos: "noun", def: "季節", sentence: "Spring is my favorite season.", translation: "春天是我最喜歡的季節。" },
+            { word: "seat", pos: "noun", def: "座位", sentence: "Please take a seat.", translation: "請坐。" },
+            { word: "second", pos: "adj./noun", def: "第二、秒", sentence: "This is my second visit.", translation: "這是我第二次造訪。" },
+            { word: "secret", pos: "noun/adj.", def: "秘密", sentence: "Can you keep a secret?", translation: "你能保守秘密嗎？" },
+            { word: "secretary", pos: "noun", def: "秘書", sentence: "The secretary answered the phone.", translation: "秘書接了電話。" },
+            { word: "section", pos: "noun", def: "部分、區域", sentence: "Read the first section.", translation: "閱讀第一部分。" },
+            { word: "see", pos: "verb", def: "看見", sentence: "I can see the bird.", translation: "我能看見那隻鳥。" },
+            { word: "seed", pos: "noun", def: "種子", sentence: "Plant the seeds in the soil.", translation: "把種子種在土裡。" },
+            { word: "seek", pos: "verb", def: "尋找", sentence: "We seek peace.", translation: "我們尋求和平。" },
+            { word: "seem", pos: "verb", def: "似乎", sentence: "He seems happy.", translation: "他似乎很開心。" },
+            { word: "seesaw", pos: "noun", def: "翹翹板", sentence: "The kids are on the seesaw.", translation: "孩子們在玩翹翹板。" },
+            { word: "seldom", pos: "adv.", def: "很少", sentence: "I seldom eat candy.", translation: "我很少吃糖果。" },
+            { word: "select", pos: "verb", def: "選擇", sentence: "Please select one.", translation: "請選一個。" },
+            { word: "self", pos: "noun", def: "自我", sentence: "Be your true self.", translation: "做真實的自己。" },
+            { word: "selfish", pos: "adj.", def: "自私的", sentence: "Don't be selfish.", translation: "不要自私。" },
+            { word: "sell", pos: "verb", def: "賣", sentence: "Do you sell stamps?", translation: "你們有賣郵票嗎？" },
+            { word: "send", pos: "verb", def: "寄送", sentence: "I will send you an email.", translation: "我會寄電子郵件給你。" },
+            { word: "sense", pos: "noun", def: "感覺、觀念", sentence: "It makes no sense.", translation: "這沒道理。" },
+            { word: "sentence", pos: "noun", def: "句子", sentence: "Write a complete sentence.", translation: "寫一個完整的句子。" },
+            { word: "September", pos: "noun", def: "九月", sentence: "School starts in September.", translation: "九月開學。" },
+            { word: "serious", pos: "adj.", def: "嚴肅的、嚴重的", sentence: "Is it a serious problem?", translation: "這是個嚴重的問題嗎？" },
+            { word: "servant", pos: "noun", def: "僕人", sentence: "They have a servant.", translation: "他們有一個僕人。" },
+            { word: "serve", pos: "verb", def: "服務、上菜", sentence: "Dinner is served.", translation: "晚餐上桌了。" },
+            { word: "service", pos: "noun", def: "服務", sentence: "The service here is good.", translation: "這裡的服務很好。" },
+            { word: "set", pos: "verb/noun", def: "設定、一套", sentence: "Please set the table.", translation: "請擺好餐具。" },
+            { word: "seven", pos: "number", def: "七", sentence: "There are seven days in a week.", translation: "一週有七天。" },
+            { word: "seventeen", pos: "number", def: "十七", sentence: "She is seventeen.", translation: "她十七歲。" },
+            { word: "seventy", pos: "number", def: "七十", sentence: "My grandpa is seventy.", translation: "我爺爺七十歲。" },
+            { word: "several", pos: "adj./pron.", def: "幾個", sentence: "I have several books.", translation: "我有幾本書。" },
+            { word: "shake", pos: "verb/noun", def: "搖動", sentence: "Shake the bottle before use.", translation: "使用前搖晃瓶子。" },
+            { word: "shall", pos: "aux.", def: "應該、將要", sentence: "Shall we go?", translation: "我們走吧？" },
+            { word: "shame", pos: "noun", def: "羞恥、可惜", sentence: "It is a shame to waste food.", translation: "浪費食物真可惜。" },
+            { word: "shape", pos: "noun", def: "形狀", sentence: "What shape is it?", translation: "它是什麼形狀？" },
+            { word: "share", pos: "verb", def: "分享", sentence: "Let's share the pizza.", translation: "我們平分這披薩。" },
+            { word: "shark", pos: "noun", def: "鯊魚", sentence: "Sharks live in the ocean.", translation: "鯊魚住在海裡。" },
+            { word: "sharp", pos: "adj.", def: "鋒利的", sentence: "The knife is very sharp.", translation: "這把刀很利。" },
+            { word: "she", pos: "pron.", def: "她", sentence: "She is my sister.", translation: "她是我的姊姊。" },
+            { word: "sheep", pos: "noun", def: "綿羊", sentence: "The sheep are eating grass.", translation: "綿羊正在吃草。" },
+            { word: "sheet", pos: "noun", def: "床單、一張(紙)", sentence: "Change the bed sheet.", translation: "更換床單。" },
+            { word: "shelf", pos: "noun", def: "架子", sentence: "Put the book on the shelf.", translation: "把書放在架子上。" },
+            { word: "shine", pos: "verb", def: "照耀", sentence: "The sun is shining.", translation: "陽光普照。" },
+            { word: "ship", pos: "noun", def: "船(大船)", sentence: "The ship is huge.", translation: "那艘船很大。" },
+            { word: "shirt", pos: "noun", def: "襯衫", sentence: "He is wearing a white shirt.", translation: "他穿著白襯衫。" },
+            { word: "shoe", pos: "noun", def: "鞋子", sentence: "I need new shoes.", translation: "我需要新鞋。" },
+            { word: "shop", pos: "noun/verb", def: "商店；購物", sentence: "I like to shop for clothes.", translation: "我喜歡買衣服。" },
+            { word: "shopkeeper", pos: "noun", def: "店主", sentence: "The shopkeeper is friendly.", translation: "店主很友善。" },
+            { word: "shore", pos: "noun", def: "岸邊", sentence: "We walked along the shore.", translation: "我們沿著岸邊走。" },
+            { word: "short", pos: "adj.", def: "短的、矮的", sentence: "He is too short to reach it.", translation: "他太矮搆不到。" },
+            { word: "shorts", pos: "noun", def: "短褲", sentence: "I wear shorts in summer.", translation: "我夏天穿短褲。" },
+            { word: "should", pos: "aux.", def: "應該", sentence: "You should study hard.", translation: "你應該努力讀書。" },
+            { word: "shoulder", pos: "noun", def: "肩膀", sentence: "He carried the bag on his shoulder.", translation: "他把包包揹在肩上。" },
+            { word: "shout", pos: "verb/noun", def: "大叫", sentence: "Don't shout at me.", translation: "不要對我大叫。" },
+            { word: "show", pos: "verb/noun", def: "顯示、表演", sentence: "Show me your ticket.", translation: "給我看你的票。" },
+            { word: "shower", pos: "noun", def: "淋浴", sentence: "I take a shower every morning.", translation: "我每天早上沖澡。" },
+            { word: "shrimp", pos: "noun", def: "蝦子", sentence: "I like fried shrimp.", translation: "我喜歡炸蝦。" },
+            { word: "shut", pos: "verb", def: "關閉", sentence: "Shut the door, please.", translation: "請關門。" },
+            { word: "shy", pos: "adj.", def: "害羞的", sentence: "Don't be shy.", translation: "別害羞。" },
+            { word: "sick", pos: "adj.", def: "生病的", sentence: "I feel sick.", translation: "我覺得不舒服。" },
+            { word: "side", pos: "noun", def: "邊、面", sentence: "Stand by my side.", translation: "站在我旁邊。" },
+            { word: "sidewalk", pos: "noun", def: "人行道", sentence: "Walk on the sidewalk.", translation: "走在人行道上。" },
+            { word: "sight", pos: "noun", def: "視力、景象", sentence: "The sunset is a beautiful sight.", translation: "日落是美麗的景象。" },
+            { word: "sign", pos: "noun/verb", def: "標誌；簽名", sentence: "Sign your name here.", translation: "在這裡簽名。" },
+            { word: "silence", pos: "noun", def: "寂靜", sentence: "Silence is golden.", translation: "沈默是金。" },
+            { word: "silent", pos: "adj.", def: "沉默的", sentence: "Be silent in the library.", translation: "在圖書館保持安靜。" },
+            { word: "silk", pos: "noun", def: "絲綢", sentence: "The dress is made of silk.", translation: "這件洋裝是絲做的。" },
+            { word: "silly", pos: "adj.", def: "愚蠢的", sentence: "Don't ask silly questions.", translation: "別問蠢問題。" },
+            { word: "silver", pos: "noun/adj.", def: "銀", sentence: "He won a silver medal.", translation: "他贏得銀牌。" },
+            { word: "similar", pos: "adj.", def: "相似的", sentence: "My bag is similar to yours.", translation: "我的包包跟你的很像。" },
+            { word: "simple", pos: "adj.", def: "簡單的", sentence: "The answer is simple.", translation: "答案很簡單。" },
+            { word: "since", pos: "prep./conj.", def: "自從", sentence: "I haven't seen him since Monday.", translation: "我從週一就沒見到他。" },
+            { word: "sing", pos: "verb", def: "唱歌", sentence: "She likes to sing.", translation: "她喜歡唱歌。" },
+            { word: "singer", pos: "noun", def: "歌手", sentence: "Who is your favorite singer?", translation: "你最喜歡的歌手是誰？" },
+            { word: "single", pos: "adj.", def: "單身的、單一的", sentence: "Are you single?", translation: "你單身嗎？" },
+            { word: "sink", pos: "noun/verb", def: "水槽；下沉", sentence: "The ship is sinking.", translation: "船正在下沉。" },
+            { word: "sir", pos: "noun", def: "先生", sentence: "May I help you, sir?", translation: "先生，需要幫忙嗎？" },
+            { word: "sister", pos: "noun", def: "姊妹", sentence: "I have two sisters.", translation: "我有兩個姊妹。"},
+            { word: "sit", pos: "verb", def: "坐", sentence: "Please sit down.", translation: "請坐下。" },
+            { word: "six", pos: "number", def: "六", sentence: "I have six apples.", translation: "我有六顆蘋果。" },
+            { word: "sixteen", pos: "number", def: "十六", sentence: "He is sixteen years old.", translation: "他十六歲。" },
+            { word: "sixty", pos: "number", def: "六十", sentence: "My grandma is sixty.", translation: "我祖母六十歲。" },
+            { word: "size", pos: "noun", def: "尺寸", sentence: "What size do you wear?", translation: "你穿幾號？" },
+            { word: "skate", pos: "verb", def: "溜冰", sentence: "I like to skate in winter.", translation: "我喜歡在冬天溜冰。" },
+            { word: "skirt", pos: "noun", def: "裙子", sentence: "She is wearing a pink skirt.", translation: "她穿著粉紅色的裙子。" },
+            { word: "sky", pos: "noun", def: "天空", sentence: "The sky is blue.", translation: "天空是藍色的。" },
+            { word: "sleep", pos: "verb/noun", def: "睡覺", sentence: "I need to sleep.", translation: "我需要睡覺。" },
+            { word: "sleepy", pos: "adj.", def: "睏倦的", sentence: "I feel sleepy.", translation: "我覺得好睏。" },
+            { word: "sleeve", pos: "noun", def: "袖子", sentence: "Roll up your sleeves.", translation: "捲起袖子。" },
+            { word: "slide", pos: "noun/verb", def: "滑梯；滑動", sentence: "The kids are playing on the slide.", translation: "孩子們在玩溜滑梯。" },
+            { word: "slim", pos: "adj.", def: "苗條的", sentence: "She is tall and slim.", translation: "她又高又苗條。" },
+            { word: "slippers", pos: "noun", def: "拖鞋", sentence: "Wear your slippers inside.", translation: "在室內穿拖鞋。" },
+            { word: "slow", pos: "adj.", def: "慢的", sentence: "Turtles are slow.", translation: "烏龜很慢。" },
+            { word: "small", pos: "adj.", def: "小的", sentence: "It is a small world.", translation: "世界真小。" },
+            { word: "smart", pos: "adj.", def: "聰明的", sentence: "He is a smart boy.", translation: "他是個聰明的男孩。" },
+            { word: "smell", pos: "verb/noun", def: "聞；氣味", sentence: "It smells good.", translation: "聞起來很香。" },
+            { word: "smile", pos: "verb/noun", def: "微笑", sentence: "She smiled at me.", translation: "她對我微笑。" },
+            { word: "smoke", pos: "noun/verb", def: "煙；抽菸", sentence: "Do you smoke?", translation: "你抽菸嗎？" },
+            { word: "snack", pos: "noun", def: "點心", sentence: "Let's have a snack.", translation: "我們吃點心吧。" },
+            { word: "snake", pos: "noun", def: "蛇", sentence: "I am afraid of snakes.", translation: "我怕蛇。" },
+            { word: "sneakers", pos: "noun", def: "運動鞋", sentence: "I wear sneakers to run.", translation: "我穿運動鞋跑步。" },
+            { word: "snow", pos: "noun/verb", def: "雪；下雪", sentence: "Do you like snow?", translation: "你喜歡雪嗎？" },
+            { word: "snowman", pos: "noun", def: "雪人", sentence: "Let's build a snowman.", translation: "我們來堆雪人。" },
+            { word: "snowy", pos: "adj.", def: "下雪的", sentence: "It was a snowy day.", translation: "那是個下雪的日子。" },
+            { word: "so", pos: "adv./conj.", def: "如此；所以", sentence: "I am so happy.", translation: "我好開心。" },
+            { word: "soap", pos: "noun", def: "肥皂", sentence: "Wash your hands with soap.", translation: "用肥皂洗手。" },
+            { word: "soccer", pos: "noun", def: "足球", sentence: "We play soccer after school.", translation: "我們放學後踢足球。" },
+            { word: "social", pos: "adj.", def: "社會的、社交的", sentence: "Man is a social animal.", translation: "人是社交動物。" },
+            { word: "society", pos: "noun", def: "社會", sentence: "We live in a free society.", translation: "我們生活在自由社會。" },
+            { word: "sock", pos: "noun", def: "襪子", sentence: "Put on your socks.", translation: "穿上你的襪子。" },
+            { word: "soda", pos: "noun", def: "汽水", sentence: "I want a can of soda.", translation: "我要一罐汽水。" },
+            { word: "sofa", pos: "noun", def: "沙發", sentence: "The cat is on the sofa.", translation: "貓在沙發上。" },
+            { word: "soft", pos: "adj.", def: "柔軟的", sentence: "The pillow is very soft.", translation: "枕頭很軟。" },
+            { word: "soil", pos: "noun", def: "土壤", sentence: "Plants grow in soil.", translation: "植物在土壤裡生長。" },
+            { word: "soldier", pos: "noun", def: "士兵", sentence: "The soldier fights for his country.", translation: "士兵為國家作戰。" },
+            { word: "solve", pos: "verb", def: "解決", sentence: "Can you solve the problem?", translation: "你能解決這個問題嗎？" },
+            { word: "some", pos: "adj./pron.", def: "一些", sentence: "I want some water.", translation: "我想要一些水。" },
+            { word: "somebody", pos: "pron.", def: "某人", sentence: "Somebody is calling you.", translation: "有人在叫你。" },
+            { word: "someone", pos: "pron.", def: "某人", sentence: "Is someone there?", translation: "有人在那裡嗎？" },
+            { word: "something", pos: "pron.", def: "某事", sentence: "I have something to tell you.", translation: "我有事要告訴你。" },
+            { word: "sometimes", pos: "adv.", def: "有時候", sentence: "I sometimes walk to work.", translation: "我有時走路上班。" },
+            { word: "somewhere", pos: "adv.", def: "某處", sentence: "Let's go somewhere fun.", translation: "我們去個好玩的地方。" },
+            { word: "son", pos: "noun", def: "兒子", sentence: "He is my son.", translation: "他是我的兒子。" },
+            { word: "song", pos: "noun", def: "歌曲", sentence: "Sing a song.", translation: "唱首歌。" },
+            { word: "soon", pos: "adv.", def: "很快", sentence: "See you soon.", translation: "待會見。" },
+            { word: "sore", pos: "adj.", def: "痠痛的", sentence: "My legs are sore.", translation: "我的腿很痠。" },
+            { word: "sorry", pos: "adj.", def: "抱歉的", sentence: "I am sorry.", translation: "我很抱歉。" },
+            { word: "soul", pos: "noun", def: "靈魂", sentence: "Music feeds the soul.", translation: "音樂滋養靈魂。" },
+            { word: "sound", pos: "noun/verb", def: "聲音；聽起來", sentence: "That sounds great.", translation: "聽起來很棒。" },
+            { word: "soup", pos: "noun", def: "湯", sentence: "The soup is hot.", translation: "湯很燙。" },
+            { word: "sour", pos: "adj.", def: "酸的", sentence: "The lemon is sour.", translation: "檸檬是酸的。" },
+            { word: "south", pos: "noun/adj./adv.", def: "南方", sentence: "Birds fly south in winter.", translation: "鳥在冬天往南飛。" },
+            { word: "soy sauce", pos: "noun", def: "醬油", sentence: "Dip the dumpling in soy sauce.", translation: "把水餃沾醬油。" },
+            { word: "space", pos: "noun", def: "空間、太空", sentence: "There is no space here.", translation: "這裡沒空間了。" },
+            { word: "spaghetti", pos: "noun", def: "義大利麵", sentence: "I love spaghetti.", translation: "我愛義大利麵。" },
+            { word: "speak", pos: "verb", def: "說", sentence: "Can you speak English?", translation: "你會說英文嗎？" },
+            { word: "speaker", pos: "noun", def: "演講者、揚聲器", sentence: "The speaker gave a good speech.", translation: "演講者發表了精彩的演說。" },
+            { word: "special", pos: "adj.", def: "特別的", sentence: "You are special to me.", translation: "你對我很特別。"},
+            { word: "speech", pos: "noun", def: "演講", sentence: "He made a long speech.", translation: "他發表了長篇演說。" },
+            { word: "speed", pos: "noun", def: "速度", sentence: "Watch your speed.", translation: "注意你的速度。" },
+            { word: "spell", pos: "verb", def: "拼寫", sentence: "How do you spell your name?", translation: "你的名字怎麼拼？" },
+            { word: "spend", pos: "verb", def: "花費(金錢、時間)", sentence: "Don't spend too much money.", translation: "不要花太多錢。" },
+            { word: "spider", pos: "noun", def: "蜘蛛", sentence: "A spider has eight legs.", translation: "蜘蛛有八隻腳。" },
+            { word: "spirit", pos: "noun", def: "精神", sentence: "Show some team spirit.", translation: "展現一點團隊精神。" },
+            { word: "spoon", pos: "noun", def: "湯匙", sentence: "Eat soup with a spoon.", translation: "用湯匙喝湯。" },
+            { word: "sport", pos: "noun", def: "運動", sentence: "Do you play any sports?", translation: "你做任何運動嗎？" },
+            { word: "spot", pos: "noun", def: "斑點、地點", sentence: "This is a good fishing spot.", translation: "這是個釣魚的好地點。" },
+            { word: "spread", pos: "verb", def: "散布、塗抹", sentence: "Spread butter on the toast.", translation: "在吐司上塗奶油。" },
+            { word: "spring", pos: "noun", def: "春天", sentence: "Flowers bloom in spring.", translation: "花在春天盛開。" },
+            { word: "square", pos: "noun/adj.", def: "正方形、廣場", sentence: "The table is square.", translation: "桌子是正方形的。" },
+            { word: "stairs", pos: "noun", def: "樓梯", sentence: "Walk up the stairs.", translation: "走上樓梯。" },
+            { word: "stamp", pos: "noun", def: "郵票", sentence: "I need a stamp for this letter.", translation: "這封信需要郵票。" },
+            { word: "stand", pos: "verb", def: "站立、忍受", sentence: "Please stand up.", translation: "請起立。" },
+            { word: "star", pos: "noun", def: "星星", sentence: "Look at the stars.", translation: "看那些星星。" },
+            { word: "start", pos: "verb/noun", def: "開始", sentence: "Let's start the game.", translation: "我們開始遊戲吧。" },
+            { word: "starve", pos: "verb", def: "挨餓", sentence: "I am starving.", translation: "我快餓死了。" },
+            { word: "state", pos: "noun", def: "州、狀態", sentence: "There are 50 states in the USA.", translation: "美國有五十個州。" },
+            { word: "station", pos: "noun", def: "車站", sentence: "The train is at the station.", translation: "火車在車站。" },
+            { word: "stay", pos: "verb", def: "待、停留", sentence: "Stay with me.", translation: "留在我身邊。" },
+            { word: "steak", pos: "noun", def: "牛排", sentence: "I like medium steak.", translation: "我喜歡五分熟牛排。" },
+            { word: "steal", pos: "verb", def: "偷竊", sentence: "Don't steal.", translation: "不要偷東西。" },
+            { word: "steam", pos: "noun", def: "蒸氣", sentence: "Steam comes out of the pot.", translation: "鍋子冒出蒸氣。" },
+            { word: "step", pos: "noun/verb", def: "步驟、步", sentence: "Follow these steps.", translation: "遵循這些步驟。" },
+            { word: "stick", pos: "noun/verb", def: "棍子；黏貼", sentence: "The glue sticks well.", translation: "膠水黏性很好。" },
+            { word: "still", pos: "adv./adj.", def: "仍然；靜止的", sentence: "I am still hungry.", translation: "我還很餓。" },
+            { word: "stingy", pos: "adj.", def: "吝嗇的", sentence: "He is very stingy.", translation: "他很小氣。" },
+            { word: "stomach", pos: "noun", def: "胃", sentence: "I have a stomach ache.", translation: "我胃痛。" },
+            { word: "stomachache", pos: "noun", def: "胃痛", sentence: "I had a stomachache yesterday.", translation: "我昨天胃痛。" },
+            { word: "stone", pos: "noun", def: "石頭", sentence: "Don't throw stones.", translation: "不要丟石頭。" },
+            { word: "stop", pos: "verb/noun", def: "停止、車站", sentence: "Stop the car.", translation: "停車。" },
+            { word: "store", pos: "noun/verb", def: "商店；儲存", sentence: "The store is open.", translation: "店開著。" },
+            { word: "storm", pos: "noun", def: "風暴", sentence: "A big storm is coming.", translation: "大風暴要來了。" },
+            { word: "stormy", pos: "adj.", def: "暴風雨的", sentence: "It was a stormy night.", translation: "那是個暴風雨之夜。" },
+            { word: "story", pos: "noun", def: "故事", sentence: "Tell me a story.", translation: "跟我講個故事。" },
+            { word: "stove", pos: "noun", def: "火爐、爐灶", sentence: "Cook on the stove.", translation: "在爐子上煮。" },
+            { word: "straight", pos: "adj./adv.", def: "直的", sentence: "Go straight ahead.", translation: "直走。" },
+            { word: "strange", pos: "adj.", def: "奇怪的", sentence: "That sounds strange.", translation: "那聽起來很怪。" },
+            { word: "stranger", pos: "noun", def: "陌生人", sentence: "Don't talk to strangers.", translation: "不要跟陌生人說話。" },
+            { word: "strawberry", pos: "noun", def: "草莓", sentence: "I like strawberry jam.", translation: "我喜歡草莓果醬。" },
+            { word: "stream", pos: "noun", def: "小河", sentence: "There are fish in the stream.", translation: "小河裡有魚。" },
+            { word: "street", pos: "noun", def: "街道", sentence: "The street is busy.", translation: "街道很忙碌。" },
+            { word: "strike", pos: "verb/noun", def: "打擊、罷工", sentence: "The clock struck twelve.", translation: "鐘敲了十二下。" },
+            { word: "strong", pos: "adj.", def: "強壯的", sentence: "He is a strong man.", translation: "他是個強壯的人。" },
+            { word: "student", pos: "noun", def: "學生", sentence: "I am a student.", translation: "我是個學生。" },
+            { word: "study", pos: "verb/noun", def: "學習", sentence: "I study English every day.", translation: "我每天讀英文。" },
+            { word: "stupid", pos: "adj.", def: "愚蠢的", sentence: "That was a stupid mistake.", translation: "那是個愚蠢的錯誤。" },
+            { word: "style", pos: "noun", def: "風格", sentence: "I like your style.", translation: "我喜歡你的風格。" },
+            { word: "subject", pos: "noun", def: "學科、主題", sentence: "What is your favorite subject?", translation: "你最喜歡哪一科？" },
+            { word: "subway", pos: "noun", def: "地鐵", sentence: "I take the subway to work.", translation: "我搭地鐵上班。" },
+            { word: "succeed", pos: "verb", def: "成功", sentence: "He succeeded in his work.", translation: "他在工作上成功了。" },
+            { word: "success", pos: "noun", def: "成功", sentence: "Hard work leads to success.", translation: "努力導致成功。" },
+            { word: "successful", pos: "adj.", def: "成功的", sentence: "She is a successful doctor.", translation: "她是位成功的醫生。" },
+            { word: "such", pos: "adj./pron.", def: "如此的", sentence: "I have never seen such a big cat.", translation: "我從沒見過這麼大的貓。" },
+            { word: "sudden", pos: "adj.", def: "突然的", sentence: "His sudden arrival surprised me.", translation: "他的突然到來嚇了我一跳。" },
+            { word: "suddenly", pos: "adv.", def: "突然地", sentence: "Suddenly it started raining.", translation: "突然間開始下雨了。" },
+            { word: "sugar", pos: "noun", def: "糖", sentence: "Do you take sugar in your coffee?", translation: "你咖啡裡加糖嗎？" },
+            { word: "suggest", pos: "verb", def: "建議", sentence: "I suggest we leave now.", translation: "我建議我們現在離開。" },
+            { word: "suggestion", pos: "noun", def: "建議", sentence: "Thanks for your suggestion.", translation: "謝謝你的建議。" },
+            { word: "suit", pos: "noun/verb", def: "西裝；適合", sentence: "That color suits you.", translation: "那個顏色很適合你。" },
+            { word: "summer", pos: "noun", def: "夏天", sentence: "It is very hot in summer.", translation: "夏天非常熱。" },
+            { word: "sun", pos: "noun", def: "太陽", sentence: "The sun is hot.", translation: "太陽很熱。" },
+            { word: "Sunday", pos: "noun", def: "星期日", sentence: "We go to church on Sunday.", translation: "我們星期日去教堂。" },
+            { word: "sunny", pos: "adj.", def: "晴朗的", sentence: "It is a sunny day.", translation: "今天是晴天。" },
+            { word: "supermarket", pos: "noun", def: "超市", sentence: "Let's go to the supermarket.", translation: "我們去超市吧。" },
+            { word: "supper", pos: "noun", def: "晚餐", sentence: "What's for supper?", translation: "晚餐吃什麼？" },
+            { word: "support", pos: "verb/noun", def: "支持", sentence: "Thanks for your support.", translation: "謝謝你的支持。" },
+            { word: "sure", pos: "adj./adv.", def: "確定的、當然", sentence: "Are you sure?", translation: "你確定嗎？" },
+            { word: "surf", pos: "verb", def: "衝浪、瀏覽(網頁)", sentence: "I like to surf the Internet.", translation: "我喜歡上網。" },
+            { word: "surface", pos: "noun", def: "表面", sentence: "The surface is smooth.", translation: "表面很平滑。" },
+            { word: "surprise", pos: "verb/noun", def: "驚訝", sentence: "What a surprise!", translation: "多驚喜啊！" },
+            { word: "surprised", pos: "adj.", def: "驚訝的", sentence: "I was surprised by the news.", translation: "我對這消息感到驚訝。" },
+            { word: "surviving", pos: "adj.", def: "存活的", sentence: "He is the only surviving member.", translation: "他是唯一存活的成員。" },
+            { word: "swallow", pos: "verb/noun", def: "吞嚥；燕子", sentence: "Swallow the pill.", translation: "把藥吞下去。" },
+            { word: "swan", pos: "noun", def: "天鵝", sentence: "The swan is beautiful.", translation: "天鵝很漂亮。" },
+            { word: "sweater", pos: "noun", def: "毛衣", sentence: "Wear a sweater.", translation: "穿件毛衣。" },
+            { word: "sweep", pos: "verb", def: "打掃", sentence: "Sweep the floor.", translation: "掃地。" },
+            { word: "sweet", pos: "adj./noun", def: "甜的；甜點", sentence: "The cake is very sweet.", translation: "蛋糕很甜。" },
+            { word: "swim", pos: "verb/noun", def: "游泳", sentence: "I like to swim.", translation: "我喜歡游泳。" },
+            { word: "swing", pos: "verb/noun", def: "搖擺、鞦韆", sentence: "The kids are on the swing.", translation: "孩子們在玩鞦韆。" },
+            { word: "symbol", pos: "noun", def: "符號、象徵", sentence: "White is a symbol of peace.", translation: "白色是和平的象徵。" },
+            { word: "system", pos: "noun", def: "系統", sentence: "The computer system is down.", translation: "電腦系統壞了。" }
+        ];
+
+        let list = [...wordData];
+        let idx = 0;
+        const colors = ['#FF6B95', '#FFD93D', '#6BCB77', '#4D96FF', '#FF9F43'];
+
+        function update() {
+            if (!list.length) return showSuccess();
+            const item = list[idx];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const wordEl = document.getElementById('word-display');
+            
+            // 動態字體縮放邏輯
+            let fontSize = 64; 
+            if (item.word.length > 13) fontSize = 38;
+            else if (item.word.length > 10) fontSize = 48;
+            
+            wordEl.innerText = item.word;
+            wordEl.style.fontSize = fontSize + "px";
+            wordEl.style.color = color;
+            
+            document.getElementById('pos-display').innerText = `(${item.pos})`;
+            document.querySelector('.card-front').style.borderColor = color;
+            
+            document.getElementById('def-display').innerText = item.def;
+            document.getElementById('def-display').style.color = (color === '#FFD93D') ? '#FF6B95' : '#FFD93D';
+            document.getElementById('sentence-en-display').innerText = item.sentence;
+            document.getElementById('sentence-zh-display').innerText = item.translation;
+            document.getElementById('card-back-face').style.backgroundColor = color;
+            
+            document.getElementById('card').classList.remove('flipped');
+            updateProg();
+        }
+
+        function updateProg() {
+            const m = wordData.length - list.length;
+            document.getElementById('progress-fill').style.width = (m / wordData.length * 100) + "%";
+            document.getElementById('progress-text').innerText = `${m} / ${wordData.length}`;
+        }
+
+        function flipCard() { document.getElementById('card').classList.toggle('flipped'); }
+        function nextCard() { if (!list.length) return; idx = (idx + 1) % list.length; update(); }
+        function prevCard() { if (!list.length) return; idx = (idx - 1 + list.length) % list.length; update(); }
+        
+        function markMastered() {
+            list.splice(idx, 1);
+            if (!list.length) return showSuccess();
+            if (idx >= list.length) idx = 0;
+            update();
+        }
+
+        function speakWord(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].word);
+            m.lang = 'en-US';
+            window.speechSynthesis.speak(m);
+        }
+
+        function speakSentence(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].sentence);
+            m.lang = 'en-US';
+            m.rate = 0.8;
+            window.speechSynthesis.speak(m);
+        }
+
+        function showSuccess() {
+            document.getElementById('learning-ui').style.display = 'none';
+            document.getElementById('header-ui').style.display = 'none';
+            document.getElementById('success-screen').style.display = 'flex';
+        }
+
+        function resetAll() {
+            list = [...wordData]; idx = 0;
+            document.getElementById('learning-ui').style.display = 'block';
+            document.getElementById('header-ui').style.display = 'block';
+            document.getElementById('success-screen').style.display = 'none';
+            update();
+        }
+
+        window.onload = update;
+    </script>
+</body>
+</html>

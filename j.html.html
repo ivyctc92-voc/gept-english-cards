@@ -1,0 +1,371 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GEPT Level J - 多巴胺單字卡 V8</title>
+    <style>
+        :root {
+            --bg-color: #F8F9FA;
+            --pink: #FF6B95;
+            --yellow: #FFD93D;
+            --green: #6BCB77;
+            --blue: #4D96FF;
+            --purple: #A29BFE;
+            --orange: #FF9F43;
+            --text-color: #2D3436;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* 頂部進度條 */
+        .header {
+            width: 100%;
+            max-width: 420px;
+            margin-bottom: 8px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: #EEE;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--yellow));
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* 核心卡片 - 420x320 */
+        .flashcard-container {
+            width: 420px;
+            height: 320px;
+            perspective: 1000px;
+            margin-bottom: 15px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flashcard.flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-front {
+            background-color: white;
+            border: 10px solid var(--pink);
+        }
+
+        .word-text {
+            font-weight: 900;
+            color: var(--pink);
+            margin: 0;
+            line-height: 1.1;
+            white-space: nowrap; 
+        }
+
+        .pos-text {
+            font-size: 20px;
+            color: #AAA;
+            font-style: italic;
+            margin-top: 8px;
+        }
+
+        .card-back {
+            background-color: var(--blue);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .def-text {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--yellow);
+        }
+
+        .sentence-en {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .sentence-zh {
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 12px;
+        }
+
+        .speak-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 42px;
+            height: 42px;
+            font-size: 22px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            width: 420px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .nav-btn, .status-btn {
+            height: 50px;
+            border: 3px solid var(--text-color);
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.1s;
+        }
+
+        .nav-btn {
+            width: 55px;
+            font-size: 22px;
+            background-color: var(--purple);
+            color: white;
+        }
+
+        .nav-btn.next { background-color: var(--yellow); color: var(--text-color); }
+
+        .status-btn { flex: 1; font-size: 16px; }
+
+        .btn-mastered { background-color: var(--green); color: white; }
+        .btn-learning { background-color: white; color: var(--text-color); }
+
+        .nav-btn:active, .status-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--text-color);
+        }
+
+        #success-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        @media (max-width: 430px) {
+            .flashcard-container, .controls, .header { width: 95vw; }
+            .flashcard-container { height: 75vw; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" id="header-ui">
+        <div class="progress-info">
+            <span id="progress-text">0 / 28</span>
+            <span onclick="resetAll()" style="font-size: 12px; cursor:pointer; color: #888;">↺ 全部重來</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <div id="learning-ui">
+        <div class="flashcard-container">
+            <div class="flashcard" id="card" onclick="flipCard()">
+                <div class="card-face card-front">
+                    <button class="speak-btn" onclick="speakWord(event)">🔊</button>
+                    <p class="word-text" id="word-display">Word</p>
+                    <p class="pos-text" id="pos-display">(pos)</p>
+                </div>
+                <div class="card-face card-back" id="card-back-face">
+                    <button class="speak-btn" onclick="speakSentence(event)" style="border: 1px solid #eee;">🔊</button>
+                    <p class="def-text" id="def-display">定義</p>
+                    <p class="sentence-en" id="sentence-en-display">Sentence.</p>
+                    <p class="sentence-zh" id="sentence-zh-display">翻譯</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="nav-btn" onclick="prevCard()">⬅</button>
+            <button class="status-btn btn-mastered" onclick="markMastered()">已精熟</button>
+            <button class="status-btn btn-learning" onclick="nextCard()">學習中</button>
+            <button class="nav-btn next" onclick="nextCard()">➡</button>
+        </div>
+    </div>
+
+    <div id="success-screen">
+        <h1 style="color: var(--pink);">太棒了！🎉</h1>
+        <p>J 群組單字已全部熟記！</p>
+        <button class="status-btn" onclick="resetAll()" style="width: 150px; margin-top: 15px;">重新開始</button>
+    </div>
+
+    <script>
+        const wordData = [
+            { word: "jacket", pos: "noun", def: "夾克、外套", sentence: "It is cold, so put on your jacket.", translation: "天氣冷，穿上你的夾克。" },
+            { word: "jail", pos: "noun", def: "監獄", sentence: "The thief was sent to jail.", translation: "小偷被送進了監獄。" },
+            { word: "jam", pos: "noun", def: "果醬、擁塞", sentence: "I like strawberry jam on toast.", translation: "我喜歡在吐司上塗草莓果醬。" },
+            { word: "January", pos: "noun", def: "一月", sentence: "January is the first month of the year.", translation: "一月是一年中的第一個月。" },
+            { word: "Japan", pos: "noun", def: "日本", sentence: "My dream is to visit Japan.", translation: "我的夢想是去日本旅遊。" },
+            { word: "Japanese", pos: "adj/n", def: "日本的、日語", sentence: "He speaks Japanese very well.", translation: "他日語說得很好。" },
+            { word: "jar", pos: "noun", def: "罐子", sentence: "The cookies are in the jar.", translation: "餅乾在罐子裡。" },
+            { word: "jaw", pos: "noun", def: "下顎", sentence: "He has a strong jaw.", translation: "他有著強壯的下顎。" },
+            { word: "jazz", pos: "noun", def: "爵士樂", sentence: "Do you like listening to jazz?", translation: "你喜歡聽爵士樂嗎？" },
+            { word: "jealous", pos: "adj.", def: "嫉妒的", sentence: "Don't be jealous of others.", translation: "不要嫉妒別人。" },
+            { word: "jeans", pos: "noun", def: "牛仔褲", sentence: "I like wearing blue jeans.", translation: "我喜歡穿藍色牛仔褲。" },
+            { word: "jeep", pos: "noun", def: "吉普車", sentence: "We drove a jeep up the mountain.", translation: "我們開吉普車上山。" },
+            { word: "jelly", pos: "noun", def: "果凍", sentence: "Children love sweet jelly.", translation: "孩子們喜歡甜果凍。" },
+            { word: "jet", pos: "noun", def: "噴射機", sentence: "The jet flew across the sky.", translation: "噴射機飛越天際。" },
+            { word: "job", pos: "noun", def: "工作", sentence: "She has a part-time job.", translation: "她有一份兼職工作。" },
+            { word: "jog", pos: "verb", def: "慢跑", sentence: "I jog in the park every morning.", translation: "我每天早上在公園慢跑。" },
+            { word: "join", pos: "verb", def: "參加、加入", sentence: "Do you want to join our club?", translation: "你想加入我們的社團嗎？" },
+            { word: "joke", pos: "n/v", def: "笑話、開玩笑", sentence: "He told a funny joke.", translation: "他講了一個好笑的笑話。" },
+            { word: "journalist", pos: "noun", def: "記者", sentence: "A journalist writes news stories.", translation: "記者撰寫新聞報導。" },
+            { word: "joy", pos: "noun", def: "喜悅", sentence: "The baby brings joy to the family.", translation: "寶寶為這個家帶來喜悅。" },
+            { word: "judge", pos: "n/v", def: "法官、裁判", sentence: "Don't judge a book by its cover.", translation: "不要以貌取人。" },
+            { word: "juice", pos: "noun", def: "果汁", sentence: "I would like a glass of orange juice.", translation: "我想要一杯柳橙汁。" },
+            { word: "July", pos: "noun", def: "七月", sentence: "School ends in July.", translation: "學校在七月結束課程。" },
+            { word: "jump", pos: "v/n", def: "跳躍", sentence: "The cat jumped onto the table.", translation: "貓跳上了桌子。" },
+            { word: "June", pos: "noun", def: "六月", sentence: "My birthday is in June.", translation: "我的生日在六月。" },
+            { word: "jungle", pos: "noun", def: "叢林", sentence: "Monkeys live in the jungle.", translation: "猴子住在叢林裡。" },
+            { word: "junior", pos: "adj/n", def: "年資較淺的", sentence: "He is a junior high school student.", translation: "他是一名國中生。" },
+            { word: "just", pos: "adv.", def: "剛剛、只是", sentence: "I just finished my homework.", translation: "我剛做完功課。" }
+        ];
+
+        let list = [...wordData];
+        let idx = 0;
+        const colors = ['#FF6B95', '#FFD93D', '#6BCB77', '#4D96FF', '#FF9F43'];
+
+        function update() {
+            if (!list.length) return showSuccess();
+            const item = list[idx];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const wordEl = document.getElementById('word-display');
+            
+            let fontSize = 64; 
+            if (item.word.length > 10) fontSize = 52;
+            
+            wordEl.innerText = item.word;
+            wordEl.style.fontSize = fontSize + "px";
+            wordEl.style.color = color;
+            
+            document.getElementById('pos-display').innerText = `(${item.pos})`;
+            document.querySelector('.card-front').style.borderColor = color;
+            
+            document.getElementById('def-display').innerText = item.def;
+            document.getElementById('def-display').style.color = (color === '#FFD93D') ? '#FF6B95' : '#FFD93D';
+            document.getElementById('sentence-en-display').innerText = item.sentence;
+            document.getElementById('sentence-zh-display').innerText = item.translation;
+            document.getElementById('card-back-face').style.backgroundColor = color;
+            
+            document.getElementById('card').classList.remove('flipped');
+            updateProg();
+        }
+
+        function updateProg() {
+            const m = wordData.length - list.length;
+            document.getElementById('progress-fill').style.width = (m / wordData.length * 100) + "%";
+            document.getElementById('progress-text').innerText = `${m} / ${wordData.length}`;
+        }
+
+        function flipCard() { document.getElementById('card').classList.toggle('flipped'); }
+        function nextCard() { idx = (idx + 1) % list.length; update(); }
+        function prevCard() { idx = (idx - 1 + list.length) % list.length; update(); }
+        
+        function markMastered() {
+            list.splice(idx, 1);
+            if (!list.length) return showSuccess();
+            if (idx >= list.length) idx = 0;
+            update();
+        }
+
+        function speakWord(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].word);
+            m.lang = 'en-US';
+            window.speechSynthesis.speak(m);
+        }
+
+        function speakSentence(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].sentence);
+            m.lang = 'en-US';
+            m.rate = 0.8;
+            window.speechSynthesis.speak(m);
+        }
+
+        function showSuccess() {
+            document.getElementById('learning-ui').style.display = 'none';
+            document.getElementById('header-ui').style.display = 'none';
+            document.getElementById('success-screen').style.display = 'flex';
+        }
+
+        function resetAll() {
+            list = [...wordData]; idx = 0;
+            document.getElementById('learning-ui').style.display = 'block';
+            document.getElementById('header-ui').style.display = 'block';
+            document.getElementById('success-screen').style.display = 'none';
+            update();
+        }
+
+        window.onload = update;
+    </script>
+</body>
+</html>

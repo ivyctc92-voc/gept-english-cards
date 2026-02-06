@@ -1,0 +1,428 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GEPT Level R - 多巴胺單字卡 V8</title>
+    <style>
+        :root {
+            --bg-color: #F8F9FA;
+            --pink: #FF6B95;
+            --yellow: #FFD93D;
+            --green: #6BCB77;
+            --blue: #4D96FF;
+            --purple: #A29BFE;
+            --orange: #FF9F43;
+            --text-color: #2D3436;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* 頂部進度條 */
+        .header {
+            width: 100%;
+            max-width: 420px;
+            margin-bottom: 8px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: #EEE;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--yellow));
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* 核心卡片 - 420x320 */
+        .flashcard-container {
+            width: 420px;
+            height: 320px;
+            perspective: 1000px;
+            margin-bottom: 15px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flashcard.flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-front {
+            background-color: white;
+            border: 10px solid var(--pink);
+        }
+
+        /* 正面單字字體 - 由 JS 動態控制大小 */
+        .word-text {
+            font-weight: 900;
+            color: var(--pink);
+            margin: 0;
+            line-height: 1.1;
+            white-space: nowrap; 
+        }
+
+        .pos-text {
+            font-size: 20px;
+            color: #AAA;
+            font-style: italic;
+            margin-top: 8px;
+        }
+
+        .card-back {
+            background-color: var(--blue);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        /* 背面資訊佈局 */
+        .def-text {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--yellow);
+        }
+
+        .sentence-en {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .sentence-zh {
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 12px;
+        }
+
+        /* 語音按鈕 */
+        .speak-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 42px;
+            height: 42px;
+            font-size: 22px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 下方操作鍵 */
+        .controls {
+            width: 420px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .nav-btn, .status-btn {
+            height: 50px;
+            border: 3px solid var(--text-color);
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.1s;
+        }
+
+        .nav-btn {
+            width: 55px;
+            font-size: 22px;
+            background-color: var(--purple);
+            color: white;
+        }
+
+        .nav-btn.next { background-color: var(--yellow); color: var(--text-color); }
+
+        .status-btn { flex: 1; font-size: 16px; }
+
+        .btn-mastered { background-color: var(--green); color: white; }
+        .btn-learning { background-color: white; color: var(--text-color); }
+
+        .nav-btn:active, .status-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--text-color);
+        }
+
+        #success-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        @media (max-width: 430px) {
+            .flashcard-container, .controls, .header { width: 95vw; }
+            .flashcard-container { height: 75vw; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" id="header-ui">
+        <div class="progress-info">
+            <span id="progress-text">0 / 78</span>
+            <span onclick="resetAll()" style="font-size: 12px; cursor:pointer; color: #888;">↺ 全部重來</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <div id="learning-ui">
+        <div class="flashcard-container">
+            <div class="flashcard" id="card" onclick="flipCard()">
+                <div class="card-face card-front">
+                    <button class="speak-btn" onclick="speakWord(event)">🔊</button>
+                    <p class="word-text" id="word-display">Word</p>
+                    <p class="pos-text" id="pos-display">(pos)</p>
+                </div>
+                <div class="card-face card-back" id="card-back-face">
+                    <button class="speak-btn" onclick="speakSentence(event)" style="border: 1px solid #eee;">🔊</button>
+                    <p class="def-text" id="def-display">定義</p>
+                    <p class="sentence-en" id="sentence-en-display">Sentence.</p>
+                    <p class="sentence-zh" id="sentence-zh-display">翻譯</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="nav-btn" onclick="prevCard()">⬅</button>
+            <button class="status-btn btn-mastered" onclick="markMastered()">已精熟</button>
+            <button class="status-btn btn-learning" onclick="nextCard()">學習中</button>
+            <button class="nav-btn next" onclick="nextCard()">➡</button>
+        </div>
+    </div>
+
+    <div id="success-screen">
+        <h1 style="color: var(--pink);">太棒了！🎉</h1>
+        <p>字母 R 的單字已全部熟記！</p>
+        <button class="status-btn" onclick="resetAll()" style="width: 150px; margin-top: 15px;">重新開始</button>
+    </div>
+
+    <script>
+        const wordData = [
+            { word: "rabbit", pos: "noun", def: "兔子", sentence: "The rabbit has long ears.", translation: "兔子有長耳朵。" },
+            { word: "race", pos: "noun/verb", def: "賽跑、種族", sentence: "Who won the race?", translation: "誰贏了比賽？" },
+            { word: "radio", pos: "noun", def: "收音機", sentence: "I listen to the radio in the car.", translation: "我在車上聽收音機。" },
+            { word: "railroad", pos: "noun", def: "鐵路", sentence: "The railroad crosses the river.", translation: "鐵路跨越那條河。" },
+            { word: "rain", pos: "noun/verb", def: "雨、下雨", sentence: "It looks like rain.", translation: "看起來要下雨了。" },
+            { word: "rainbow", pos: "noun", def: "彩虹", sentence: "Look at the beautiful rainbow.", translation: "看那美麗的彩虹。" },
+            { word: "raincoat", pos: "noun", def: "雨衣", sentence: "Wear your raincoat.", translation: "穿上你的雨衣。" },
+            { word: "rainy", pos: "adj.", def: "下雨的", sentence: "I hate rainy days.", translation: "我討厭下雨天。" },
+            { word: "raise", pos: "verb/noun", def: "舉起、撫養", sentence: "Please raise your hand.", translation: "請舉手。" },
+            { word: "rare", pos: "adj.", def: "稀有的", sentence: "This bird is very rare.", translation: "這種鳥很稀有。" },
+            { word: "rat", pos: "noun", def: "老鼠(較大的)", sentence: "I saw a huge rat.", translation: "我看到一隻大老鼠。" },
+            { word: "rather", pos: "adv.", def: "寧願、相當", sentence: "I would rather stay home.", translation: "我寧願待在家。" },
+            { word: "reach", pos: "verb", def: "到達、伸手及", sentence: "Can you reach the top shelf?", translation: "你搆得到最上面的架子嗎？" },
+            { word: "read", pos: "verb", def: "閱讀", sentence: "I like to read books.", translation: "我喜歡看書。" },
+            { word: "ready", pos: "adj.", def: "準備好的", sentence: "Are you ready to go?", translation: "你準備好要走了嗎？" },
+            { word: "real", pos: "adj.", def: "真實的", sentence: "Is this flower real?", translation: "這朵花是真的嗎？" },
+            { word: "realize", pos: "verb", def: "了解、實現", sentence: "I didn't realize you were here.", translation: "我不知道你在這裡。" },
+            { word: "really", pos: "adv.", def: "真地", sentence: "I am really sorry.", translation: "我真的很抱歉。" },
+            { word: "reason", pos: "noun", def: "理由", sentence: "Give me a good reason.", translation: "給我一個好理由。" },
+            { word: "receive", pos: "verb", def: "收到", sentence: "I received a letter today.", translation: "我今天收到一封信。" },
+            { word: "recent", pos: "adj.", def: "最近的", sentence: "This is a recent photo.", translation: "這是一張最近的照片。" },
+            { word: "record", pos: "noun/verb", def: "記錄、錄音", sentence: "He broke the world record.", translation: "他打破了世界紀錄。" },
+            { word: "recover", pos: "verb", def: "恢復", sentence: "I hope you recover soon.", translation: "希望你早日康復。" },
+            { word: "red", pos: "adj./noun", def: "紅色", sentence: "Apples are red.", translation: "蘋果是紅色的。" },
+            { word: "refrigerator", pos: "noun", def: "冰箱", sentence: "The milk is in the refrigerator.", translation: "牛奶在冰箱裡。" },
+            { word: "refuse", pos: "verb", def: "拒絕", sentence: "He refused to help me.", translation: "他拒絕幫我。" },
+            { word: "regard", pos: "noun/verb", def: "關心、視為", sentence: "Give my regards to your parents.", translation: "代我問候你父母。" },
+            { word: "regular", pos: "adj.", def: "規律的、普通的", sentence: "I want a regular coffee.", translation: "我要一杯普通咖啡。" },
+            { word: "reject", pos: "verb", def: "拒絕", sentence: "She rejected his offer.", translation: "她拒絕了他的提議。" },
+            { word: "relation", pos: "noun", def: "關係", sentence: "What is the relation between them?", translation: "他們之間是什麼關係？" },
+            { word: "relative", pos: "noun/adj.", def: "親戚；相對的", sentence: "All my relatives came to the party.", translation: "我所有的親戚都來參加派對了。" },
+            { word: "relax", pos: "verb", def: "放鬆", sentence: "Just relax and enjoy.", translation: "放輕鬆並享受。" },
+            { word: "religion", pos: "noun", def: "宗教", sentence: "Buddhism is a religion.", translation: "佛教是一種宗教。" },
+            { word: "remember", pos: "verb", def: "記得", sentence: "Do you remember me?", translation: "你記得我嗎？" },
+            { word: "remind", pos: "verb", def: "提醒", sentence: "Please remind me later.", translation: "請晚點提醒我。" },
+            { word: "rent", pos: "noun/verb", def: "租金、租用", sentence: "We rent an apartment.", translation: "我們租了一間公寓。" },
+            { word: "repair", pos: "verb/noun", def: "修理", sentence: "Can you repair my bike?", translation: "你能修我的腳踏車嗎？" },
+            { word: "repeat", pos: "verb", def: "重複", sentence: "Please repeat after me.", translation: "請跟著我唸。" },
+            { word: "report", pos: "noun/verb", def: "報告", sentence: "He wrote a report on history.", translation: "他寫了一份歷史報告。" },
+            { word: "reporter", pos: "noun", def: "記者", sentence: "The reporter is interviewing the star.", translation: "記者正在採訪那位明星。" },
+            { word: "respect", pos: "noun/verb", def: "尊敬", sentence: "We should respect our elders.", translation: "我們應該尊敬長輩。" },
+            { word: "responsible", pos: "adj.", def: "負責任的", sentence: "Who is responsible for this mess?", translation: "誰要對這一團亂負責？" },
+            { word: "rest", pos: "noun/verb", def: "休息、其餘", sentence: "Let's take a rest.", translation: "我們休息一下吧。" },
+            { word: "restaurant", pos: "noun", def: "餐廳", sentence: "We ate at a nice restaurant.", translation: "我們在一間很棒的餐廳吃飯。" },
+            { word: "restroom", pos: "noun", def: "洗手間", sentence: "Where is the restroom?", translation: "洗手間在哪裡？" },
+            { word: "result", pos: "noun", def: "結果", sentence: "The result was good.", translation: "結果很好。" },
+            { word: "return", pos: "verb/noun", def: "返回、歸還", sentence: "Please return the book.", translation: "請歸還這本書。" },
+            { word: "review", pos: "noun/verb", def: "複習、評論", sentence: "Let's review the lesson.", translation: "我們來複習這一課。" },
+            { word: "revise", pos: "verb", def: "修改、修訂", sentence: "I need to revise my essay.", translation: "我需要修改我的文章。" },
+            { word: "rice", pos: "noun", def: "米飯", sentence: "We eat rice every day.", translation: "我們每天吃白飯。" },
+            { word: "rich", pos: "adj.", def: "富有的", sentence: "He wants to be rich.", translation: "他想要變富有。" },
+            { word: "ride", pos: "verb/noun", def: "騎、搭乘", sentence: "Can you ride a bike?", translation: "你會騎腳踏車嗎？" },
+            { word: "right", pos: "adj./adv./noun", def: "對的、右邊、權利", sentence: "Turn right.", translation: "右轉。" },
+            { word: "ring", pos: "noun/verb", def: "戒指、鈴響", sentence: "The phone is ringing.", translation: "電話響了。" },
+            { word: "rise", pos: "verb/noun", def: "上升", sentence: "The sun rises in the east.", translation: "太陽從東方升起。" },
+            { word: "river", pos: "noun", def: "河流", sentence: "The river is very long.", translation: "這條河很長。" },
+            { word: "road", pos: "noun", def: "道路", sentence: "The road is bumpy.", translation: "這條路很顛簸。" },
+            { word: "rob", pos: "verb", def: "搶劫", sentence: "Someone robbed the bank.", translation: "有人搶了銀行。" },
+            { word: "robot", pos: "noun", def: "機器人", sentence: "The robot can dance.", translation: "機器人會跳舞。" },
+            { word: "rock", pos: "noun", def: "岩石、搖滾樂", sentence: "He threw a rock into the water.", translation: "他丟了一顆石頭到水裡。" },
+            { word: "rocket", pos: "noun", def: "火箭", sentence: "The rocket flew into space.", translation: "火箭飛向太空。" },
+            { word: "role", pos: "noun", def: "角色", sentence: "He played a key role.", translation: "他扮演了關鍵角色。" },
+            { word: "roll", pos: "verb/noun", def: "滾動、捲", sentence: "The ball rolled away.", translation: "球滾走了。" },
+            { word: "roof", pos: "noun", def: "屋頂", sentence: "The cat is on the roof.", translation: "貓在屋頂上。" },
+            { word: "room", pos: "noun", def: "房間、空間", sentence: "Is there enough room for me?", translation: "有足夠的空間給我嗎？" },
+            { word: "root", pos: "noun", def: "根", sentence: "Trees have deep roots.", translation: "樹有深根。" },
+            { word: "rope", pos: "noun", def: "繩子", sentence: "Tie the knot with a rope.", translation: "用繩子打結。" },
+            { word: "rose", pos: "noun", def: "玫瑰", sentence: "He gave her a red rose.", translation: "他送她一朵紅玫瑰。" },
+            { word: "round", pos: "adj./prep.", def: "圓的、圍繞", sentence: "The table is round.", translation: "這張桌子是圓的。" },
+            { word: "row", pos: "noun/verb", def: "排、划船", sentence: "We sat in the front row.", translation: "我們坐在第一排。" },
+            { word: "royal", pos: "adj.", def: "皇家的", sentence: "The royal family lives here.", translation: "皇室家族住在這裡。" },
+            { word: "rub", pos: "verb", def: "摩擦", sentence: "He rubbed his eyes.", translation: "他揉了揉眼睛。" },
+            { word: "rubber", pos: "noun", def: "橡膠", sentence: "Tires are made of rubber.", translation: "輪胎是橡膠做的。" },
+            { word: "rude", pos: "adj.", def: "無禮的", sentence: "It is rude to stare.", translation: "盯著人看是無禮的。" },
+            { word: "rule", pos: "noun/verb", def: "規則；統治", sentence: "Follow the rules.", translation: "遵守規則。" },
+            { word: "ruler", pos: "noun", def: "尺、統治者", sentence: "I use a ruler to draw lines.", translation: "我用尺畫線。" },
+            { word: "run", pos: "verb", def: "跑、經營", sentence: "He can run very fast.", translation: "他可以跑很快。" },
+            { word: "rush", pos: "verb/noun", def: "匆忙", sentence: "Don't rush.", translation: "不要匆忙。" }
+        ];
+
+        let list = [...wordData];
+        let idx = 0;
+        const colors = ['#FF6B95', '#FFD93D', '#6BCB77', '#4D96FF', '#FF9F43'];
+
+        function update() {
+            if (!list.length) return showSuccess();
+            const item = list[idx];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const wordEl = document.getElementById('word-display');
+            
+            // 動態字體縮放
+            let fontSize = 64; 
+            if (item.word.length > 13) fontSize = 38;
+            else if (item.word.length > 10) fontSize = 48;
+            
+            wordEl.innerText = item.word;
+            wordEl.style.fontSize = fontSize + "px";
+            wordEl.style.color = color;
+            
+            document.getElementById('pos-display').innerText = `(${item.pos})`;
+            document.querySelector('.card-front').style.borderColor = color;
+            
+            document.getElementById('def-display').innerText = item.def;
+            document.getElementById('def-display').style.color = (color === '#FFD93D') ? '#FF6B95' : '#FFD93D';
+            document.getElementById('sentence-en-display').innerText = item.sentence;
+            document.getElementById('sentence-zh-display').innerText = item.translation;
+            document.getElementById('card-back-face').style.backgroundColor = color;
+            
+            document.getElementById('card').classList.remove('flipped');
+            updateProg();
+        }
+
+        function updateProg() {
+            const m = wordData.length - list.length;
+            document.getElementById('progress-fill').style.width = (m / wordData.length * 100) + "%";
+            document.getElementById('progress-text').innerText = `${m} / ${wordData.length}`;
+        }
+
+        function flipCard() { document.getElementById('card').classList.toggle('flipped'); }
+        function nextCard() { if (!list.length) return; idx = (idx + 1) % list.length; update(); }
+        function prevCard() { if (!list.length) return; idx = (idx - 1 + list.length) % list.length; update(); }
+        
+        function markMastered() {
+            list.splice(idx, 1);
+            if (!list.length) return showSuccess();
+            if (idx >= list.length) idx = 0;
+            update();
+        }
+
+        function speakWord(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].word);
+            m.lang = 'en-US';
+            window.speechSynthesis.speak(m);
+        }
+
+        function speakSentence(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].sentence);
+            m.lang = 'en-US';
+            m.rate = 0.8;
+            window.speechSynthesis.speak(m);
+        }
+
+        function showSuccess() {
+            document.getElementById('learning-ui').style.display = 'none';
+            document.getElementById('header-ui').style.display = 'none';
+            document.getElementById('success-screen').style.display = 'flex';
+        }
+
+        function resetAll() {
+            list = [...wordData]; idx = 0;
+            document.getElementById('learning-ui').style.display = 'block';
+            document.getElementById('header-ui').style.display = 'block';
+            document.getElementById('success-screen').style.display = 'none';
+            update();
+        }
+
+        window.onload = update;
+    </script>
+</body>
+</html>
+

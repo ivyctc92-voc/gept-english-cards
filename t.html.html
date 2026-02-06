@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GEPT Level T - 多巴胺單字卡 V8</title>
+    <style>
+        :root {
+            --bg-color: #F8F9FA;
+            --pink: #FF6B95;
+            --yellow: #FFD93D;
+            --green: #6BCB77;
+            --blue: #4D96FF;
+            --purple: #A29BFE;
+            --orange: #FF9F43;
+            --text-color: #2D3436;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 420px;
+            margin-bottom: 8px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: #EEE;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--yellow));
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .flashcard-container {
+            width: 420px;
+            height: 320px;
+            perspective: 1000px;
+            margin-bottom: 15px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flashcard.flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-front {
+            background-color: white;
+            border: 10px solid var(--pink);
+        }
+
+        .word-text {
+            font-weight: 900;
+            color: var(--pink);
+            margin: 0;
+            line-height: 1.1;
+            white-space: nowrap; 
+        }
+
+        .pos-text {
+            font-size: 20px;
+            color: #AAA;
+            font-style: italic;
+            margin-top: 8px;
+        }
+
+        .card-back {
+            background-color: var(--blue);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .def-text {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--yellow);
+        }
+
+        .sentence-en {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .sentence-zh {
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 12px;
+        }
+
+        .speak-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 42px;
+            height: 42px;
+            font-size: 22px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            width: 420px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .nav-btn, .status-btn {
+            height: 50px;
+            border: 3px solid var(--text-color);
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.1s;
+        }
+
+        .nav-btn {
+            width: 55px;
+            font-size: 22px;
+            background-color: var(--purple);
+            color: white;
+        }
+
+        .nav-btn.next { background-color: var(--yellow); color: var(--text-color); }
+
+        .status-btn { flex: 1; font-size: 16px; }
+
+        .btn-mastered { background-color: var(--green); color: white; }
+        .btn-learning { background-color: white; color: var(--text-color); }
+
+        .nav-btn:active, .status-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--text-color);
+        }
+
+        #success-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        @media (max-width: 430px) {
+            .flashcard-container, .controls, .header { width: 95vw; }
+            .flashcard-container { height: 75vw; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" id="header-ui">
+        <div class="progress-info">
+            <span id="progress-text">0 / 126</span>
+            <span onclick="resetAll()" style="font-size: 12px; cursor:pointer; color: #888;">↺ 全部重來</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <div id="learning-ui">
+        <div class="flashcard-container">
+            <div class="flashcard" id="card" onclick="flipCard()">
+                <div class="card-face card-front">
+                    <button class="speak-btn" onclick="speakWord(event)">🔊</button>
+                    <p class="word-text" id="word-display">Word</p>
+                    <p class="pos-text" id="pos-display">(pos)</p>
+                </div>
+                <div class="card-face card-back" id="card-back-face">
+                    <button class="speak-btn" onclick="speakSentence(event)" style="border: 1px solid #eee;">🔊</button>
+                    <p class="def-text" id="def-display">定義</p>
+                    <p class="sentence-en" id="sentence-en-display">Sentence.</p>
+                    <p class="sentence-zh" id="sentence-zh-display">翻譯</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="nav-btn" onclick="prevCard()">⬅</button>
+            <button class="status-btn btn-mastered" onclick="markMastered()">已精熟</button>
+            <button class="status-btn btn-learning" onclick="nextCard()">學習中</button>
+            <button class="nav-btn next" onclick="nextCard()">➡</button>
+        </div>
+    </div>
+
+    <div id="success-screen">
+        <h1 style="color: var(--pink);">太棒了！🎉</h1>
+        <p>字母 T 的單字已全部熟記！</p>
+        <button class="status-btn" onclick="resetAll()" style="width: 150px; margin-top: 15px;">重新開始</button>
+    </div>
+
+    <script>
+        const wordData = [
+            { word: "table", pos: "noun", def: "桌子", sentence: "The food is on the table.", translation: "食物在桌子上。" },
+            { word: "table tennis", pos: "noun", def: "桌球", sentence: "He plays table tennis well.", translation: "他桌球打得很好。" },
+            { word: "tail", pos: "noun", def: "尾巴", sentence: "The dog wagged its tail.", translation: "狗搖了搖尾巴。" },
+            { word: "Taiwan", pos: "noun", def: "台灣", sentence: "Taiwan is my home.", translation: "台灣是我的家。" },
+            { word: "take", pos: "verb", def: "拿取、花費(時間)", sentence: "Please take one.", translation: "請拿一個。" },
+            { word: "talk", pos: "verb/noun", def: "說話", sentence: "Can we talk?", translation: "我們可以談談嗎？" },
+            { word: "tall", pos: "adj.", def: "高的", sentence: "He is very tall.", translation: "他很高。" },
+            { word: "tank", pos: "noun", def: "坦克、槽", sentence: "There is a fish tank.", translation: "那裡有個魚缸。" },
+            { word: "tape", pos: "noun", def: "膠帶、錄音帶", sentence: "Use tape to fix the paper.", translation: "用膠帶把紙黏好。" },
+            { word: "taste", pos: "verb/noun", def: "品嚐；味道", sentence: "The soup tastes good.", translation: "這湯嚐起來很棒。" },
+            { word: "taxi", pos: "noun", def: "計程車", sentence: "I took a taxi home.", translation: "我搭計程車回家。" },
+            { word: "tea", pos: "noun", def: "茶", sentence: "I drink tea every morning.", translation: "我每天早上喝茶。" },
+            { word: "teach", pos: "verb", def: "教導", sentence: "My father teaches English.", translation: "我父親教英文。" },
+            { word: "teacher", pos: "noun", def: "老師", sentence: "She is a good teacher.", translation: "她是位好老師。" },
+            { word: "team", pos: "noun", def: "隊伍", sentence: "We are a great team.", translation: "我們是很棒的團隊。" },
+            { word: "teapot", pos: "noun", def: "茶壺", sentence: "The teapot is hot.", translation: "茶壺很燙。" },
+            { word: "tear", pos: "noun", def: "眼淚", sentence: "She wiped away a tear.", translation: "她擦掉了一滴眼淚。" },
+            { word: "teenager", pos: "noun", def: "青少年", sentence: "He is a rebel teenager.", translation: "他是個叛逆的青少年。" },
+            { word: "telephone", pos: "noun", def: "電話", sentence: "The telephone rang.", translation: "電話響了。" },
+            { word: "television", pos: "noun", def: "電視", sentence: "I watch television at night.", translation: "我晚上看電視。" },
+            { word: "tell", pos: "verb", def: "告訴", sentence: "Tell me the truth.", translation: "告訴我真相。" },
+            { word: "temperature", pos: "noun", def: "溫度", sentence: "The temperature is low today.", translation: "今天氣溫很低。" },
+            { word: "temple", pos: "noun", def: "寺廟", sentence: "We prayed at the temple.", translation: "我們在寺廟祈禱。" },
+            { word: "ten", pos: "number", def: "十", sentence: "I have ten fingers.", translation: "我有十根手指。" },
+            { word: "tennis", pos: "noun", def: "網球", sentence: "Do you like playing tennis?", translation: "你喜歡打網球嗎？" },
+            { word: "tent", pos: "noun", def: "帳篷", sentence: "We slept in a tent.", translation: "我們睡在帳篷裡。" },
+            { word: "term", pos: "noun", def: "學期、術語", sentence: "The new term starts soon.", translation: "新學期快開始了。" },
+            { word: "terrible", pos: "adj.", def: "可怕的、糟糕的", sentence: "The traffic was terrible.", translation: "交通很糟糕。" },
+            { word: "test", pos: "noun/verb", def: "考試", sentence: "I passed the test.", translation: "我通過考試了。" },
+            { word: "than", pos: "prep./conj.", def: "比", sentence: "He is taller than me.", translation: "他比我高。" },
+            { word: "thank", pos: "verb", def: "感謝", sentence: "Thank you for your help.", translation: "謝謝你的幫忙。" },
+            { word: "that", pos: "pron./adj.", def: "那個", sentence: "What is that?", translation: "那是什麼？" },
+            { word: "theater", pos: "noun", def: "戲院", sentence: "We went to the movie theater.", translation: "我們去了電影院。" },
+            { word: "then", pos: "adv.", def: "然後、那時", sentence: "Finish your homework, then play.", translation: "做完功課，然後去玩。" },
+            { word: "there", pos: "adv.", def: "那裡", sentence: "The book is over there.", translation: "書在那邊。" },
+            { word: "therefore", pos: "adv.", def: "因此", sentence: "He was sick; therefore, he stayed home.", translation: "他生病了，因此他待在家。" },
+            { word: "these", pos: "pron./adj.", def: "這些", sentence: "These are my shoes.", translation: "這些是我的鞋子。" },
+            { word: "they", pos: "pron.", def: "他們", sentence: "They are playing soccer.", translation: "他們正在踢足球。" },
+            { word: "thick", pos: "adj.", def: "厚的", sentence: "The book is very thick.", translation: "這本書很厚。" },
+            { word: "thief", pos: "noun", def: "小偷", sentence: "The thief stole the money.", translation: "小偷把錢偷走了。" },
+            { word: "thin", pos: "adj.", def: "薄的、瘦的", sentence: "She is very thin.", translation: "她很瘦。" },
+            { word: "thing", pos: "noun", def: "東西、事情", sentence: "What is this thing?", translation: "這是什麼東西？" },
+            { word: "think", pos: "verb", def: "思考、認為", sentence: "I think you are right.", translation: "我認為你是對的。" },
+            { word: "third", pos: "adj./noun", def: "第三", sentence: "This is my third time here.", translation: "這是我第三次來這裡。" },
+            { word: "thirsty", pos: "adj.", def: "口渴的", sentence: "I am thirsty.", translation: "我口渴了。" },
+            { word: "thirteen", pos: "number", def: "十三", sentence: "She is thirteen.", translation: "她十三歲。" },
+            { word: "thirty", pos: "number", def: "三十", sentence: "The book costs thirty dollars.", translation: "這本書三十元。" },
+            { word: "this", pos: "pron./adj.", def: "這個", sentence: "This is my friend.", translation: "這是我的朋友。" },
+            { word: "those", pos: "pron./adj.", def: "那些", sentence: "Those apples look good.", translation: "那些蘋果看起來不錯。" },
+            { word: "though", pos: "conj.", def: "雖然", sentence: "Though it rained, we went out.", translation: "雖然下雨，我們還是出去了。" },
+            { word: "thought", pos: "noun", def: "想法", sentence: "I had a thought.", translation: "我有個想法。" },
+            { word: "thousand", pos: "number", def: "千", sentence: "One thousand dollars.", translation: "一千元。" },
+            { word: "three", pos: "number", def: "三", sentence: "I have three cats.", translation: "我有三隻貓。" },
+            { word: "throat", pos: "noun", def: "喉嚨", sentence: "My throat hurts.", translation: "我喉嚨痛。" },
+            { word: "through", pos: "prep.", def: "穿過", sentence: "We walked through the park.", translation: "我們穿過公園。" },
+            { word: "throw", pos: "verb", def: "丟", sentence: "Don't throw trash here.", translation: "不要在這裡丟垃圾。" },
+            { word: "thumb", pos: "noun", def: "拇指", sentence: "He gave me a thumbs up.", translation: "他對我豎起大拇指。" },
+            { word: "thunder", pos: "noun", def: "雷", sentence: "I heard loud thunder.", translation: "我聽到很大的雷聲。" },
+            { word: "Thursday", pos: "noun", def: "星期四", sentence: "See you on Thursday.", translation: "星期四見。" },
+            { word: "ticket", pos: "noun", def: "票", sentence: "Do you have a ticket?", translation: "你有票嗎？" },
+            { word: "tidy", pos: "adj./verb", def: "整潔的", sentence: "Keep your room tidy.", translation: "保持房間整潔。" },
+            { word: "tie", pos: "verb/noun", def: "綁；領帶", sentence: "He wore a suit and tie.", translation: "他穿西裝打領帶。" },
+            { word: "tiger", pos: "noun", def: "老虎", sentence: "The tiger is scary.", translation: "老虎很可怕。" },
+            { word: "tight", pos: "adj.", def: "緊的", sentence: "The shoes are too tight.", translation: "鞋子太緊了。" },
+            { word: "time", pos: "noun", def: "時間", sentence: "What time is it?", translation: "現在幾點？" },
+            { word: "tiny", pos: "adj.", def: "極小的", sentence: "The ant is tiny.", translation: "螞蟻很小。" },
+            { word: "tip", pos: "noun", def: "秘訣、小費", sentence: "He gave me a good tip.", translation: "他給了我一個好秘訣/小費。" },
+            { word: "tired", pos: "adj.", def: "疲累的", sentence: "I am very tired.", translation: "我很累。" },
+            { word: "title", pos: "noun", def: "標題", sentence: "Read the title of the book.", translation: "讀這本書的標題。" },
+            { word: "to", pos: "prep.", def: "去、向", sentence: "I go to school.", translation: "我去上學。" },
+            { word: "toast", pos: "noun", def: "吐司", sentence: "I had toast for breakfast.", translation: "我早餐吃吐司。" },
+            { word: "today", pos: "noun/adv.", def: "今天", sentence: "Today is my birthday.", translation: "今天是我的生日。" },
+            { word: "toe", pos: "noun", def: "腳趾", sentence: "He hurt his big toe.", translation: "他傷了大拇趾。" },
+            { word: "tofu", pos: "noun", def: "豆腐", sentence: "I like fried tofu.", translation: "我喜歡炸豆腐。" },
+            { word: "together", pos: "adv.", def: "一起", sentence: "Let's work together.", translation: "我們一起工作吧。" },
+            { word: "toilet", pos: "noun", def: "廁所、馬桶", sentence: "Where is the toilet?", translation: "廁所在哪裡？" },
+            { word: "tomato", pos: "noun", def: "番茄", sentence: "Is tomato a fruit?", translation: "番茄是水果嗎？" },
+            { word: "tomorrow", pos: "noun/adv.", def: "明天", sentence: "I will see you tomorrow.", translation: "我明天見你。" },
+            { word: "tongue", pos: "noun", def: "舌頭", sentence: "Don't stick out your tongue.", translation: "不要吐舌頭。" },
+            { word: "tonight", pos: "noun/adv.", def: "今晚", sentence: "Are you free tonight?", translation: "你今晚有空嗎？" },
+            { word: "too", pos: "adv.", def: "太、也", sentence: "It is too hot.", translation: "太熱了。" },
+            { word: "tool", pos: "noun", def: "工具", sentence: "I need a tool to fix this.", translation: "我需要工具來修這個。" },
+            { word: "tooth", pos: "noun", def: "牙齒", sentence: "I have a loose tooth.", translation: "我有一顆牙齒鬆了。" },
+            { word: "top", pos: "noun/adj.", def: "頂端", sentence: "He climbed to the top.", translation: "他爬到了頂端。" },
+            { word: "total", pos: "adj./noun", def: "總共的", sentence: "What is the total cost?", translation: "總費用是多少？" },
+            { word: "touch", pos: "verb", def: "碰觸", sentence: "Don't touch the painting.", translation: "不要碰那幅畫。" },
+            { word: "towel", pos: "noun", def: "毛巾", sentence: "Dry your hands with a towel.", translation: "用毛巾擦乾手。" },
+            { word: "tower", pos: "noun", def: "塔", sentence: "The Taipei 101 tower is tall.", translation: "台北101大樓很高。" },
+            { word: "town", pos: "noun", def: "城鎮", sentence: "It is a small town.", translation: "這是個小鎮。" },
+            { word: "toy", pos: "noun", def: "玩具", sentence: "Put your toys away.", translation: "把玩具收好。" },
+            { word: "trace", pos: "verb/noun", def: "追蹤、痕跡", sentence: "They traced the call.", translation: "他們追蹤了這通電話。" },
+            { word: "trade", pos: "noun/verb", def: "貿易、交換", sentence: "Trade is important for the economy.", translation: "貿易對經濟很重要。" },
+            { word: "traditional", pos: "adj.", def: "傳統的", sentence: "We ate traditional food.", translation: "我們吃了傳統食物。" },
+            { word: "traffic", pos: "noun", def: "交通", sentence: "There is heavy traffic.", translation: "交通很繁忙。" },
+            { word: "train", pos: "noun/verb", def: "火車；訓練", sentence: "The train is coming.", translation: "火車來了。" },
+            { word: "trap", pos: "noun/verb", def: "陷阱", sentence: "The mouse is caught in a trap.", translation: "老鼠被夾在陷阱裡。" },
+            { word: "trash", pos: "noun", def: "垃圾", sentence: "Throw the trash in the bin.", translation: "把垃圾丟進桶子裡。" },
+            { word: "travel", pos: "verb/noun", def: "旅行", sentence: "I love to travel.", translation: "我愛旅行。" },
+            { word: "treasure", pos: "noun", def: "寶藏", sentence: "They found buried treasure.", translation: "他們發現了埋藏的寶藏。" },
+            { word: "treat", pos: "verb/noun", def: "對待、請客", sentence: "He treats me well.", translation: "他對我很好。" },
+            { word: "tree", pos: "noun", def: "樹", sentence: "Birds live in the tree.", translation: "鳥住在樹上。" },
+            { word: "triangle", pos: "noun", def: "三角形", sentence: "Draw a triangle.", translation: "畫一個三角形。" },
+            { word: "trick", pos: "noun/verb", def: "把戲、惡作劇", sentence: "He played a trick on me.", translation: "他捉弄了我。" },
+            { word: "trip", pos: "noun", def: "旅行", sentence: "Have a safe trip.", translation: "旅途平安。" },
+            { word: "trouble", pos: "noun", def: "麻煩", sentence: "I am in trouble.", translation: "我有麻煩了。" },
+            { word: "trousers", pos: "noun", def: "長褲", sentence: "He bought new trousers.", translation: "他買了新長褲。" },
+            { word: "truck", pos: "noun", def: "卡車", sentence: "The truck carries goods.", translation: "卡車載運貨物。" },
+            { word: "true", pos: "adj.", def: "真實的", sentence: "Is the story true?", translation: "這故事是真的嗎？" },
+            { word: "trumpet", pos: "noun", def: "小號(喇叭)", sentence: "He plays the trumpet.", translation: "他吹小號。" },
+            { word: "trust", pos: "verb/noun", def: "信任", sentence: "Trust me.", translation: "相信我。" },
+            { word: "truth", pos: "noun", def: "真相", sentence: "Tell the truth.", translation: "說實話。" },
+            { word: "try", pos: "verb", def: "嘗試", sentence: "Try your best.", translation: "盡你所能。" },
+            { word: "T-shirt", pos: "noun", def: "T恤", sentence: "I like wearing T-shirts.", translation: "我喜歡穿T恤。" },
+            { word: "tub", pos: "noun", def: "浴缸、桶", sentence: "Soak in the tub.", translation: "在浴缸裡泡澡。" },
+            { word: "tube", pos: "noun", def: "管子", sentence: "A tube of toothpaste.", translation: "一條牙膏。" },
+            { word: "Tuesday", pos: "noun", def: "星期二", sentence: "We have a meeting on Tuesday.", translation: "我們週二有會議。" },
+            { word: "tunnel", pos: "noun", def: "隧道", sentence: "The train went through the tunnel.", translation: "火車穿過隧道。" },
+            { word: "turkey", pos: "noun", def: "火雞", sentence: "We eat turkey on Thanksgiving.", translation: "我們在感恩節吃火雞。" },
+            { word: "turn", pos: "verb/noun", def: "轉、輪流", sentence: "Turn left.", translation: "左轉。" },
+            { word: "turtle", pos: "noun", def: "烏龜", sentence: "The turtle walks slowly.", translation: "烏龜走得很慢。" },
+            { word: "twelve", pos: "number", def: "十二", sentence: "It is twelve o'clock.", translation: "現在十二點。" },
+            { word: "twenty", pos: "number", def: "二十", sentence: "I have twenty dollars.", translation: "我有二十元。" },
+            { word: "twice", pos: "adv.", def: "兩次", sentence: "I have been there twice.", translation: "我去過那裡兩次。" },
+            { word: "two", pos: "number", def: "二", sentence: "One plus one is two.", translation: "一加一等於二。" },
+            { word: "type", pos: "noun/verb", def: "類型；打字", sentence: "What type of music do you like?", translation: "你喜歡哪種類型的音樂？" },
+            { word: "typhoon", pos: "noun", def: "颱風", sentence: "A typhoon is coming.", translation: "颱風要來了。" }
+        ];
+
+        let list = [...wordData];
+        let idx = 0;
+        const colors = ['#FF6B95', '#FFD93D', '#6BCB77', '#4D96FF', '#FF9F43'];
+
+        function update() {
+            if (!list.length) return showSuccess();
+            const item = list[idx];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const wordEl = document.getElementById('word-display');
+            
+            // 動態字體縮放
+            let fontSize = 64; 
+            if (item.word.length > 13) fontSize = 38;
+            else if (item.word.length > 10) fontSize = 48;
+            
+            wordEl.innerText = item.word;
+            wordEl.style.fontSize = fontSize + "px";
+            wordEl.style.color = color;
+            
+            document.getElementById('pos-display').innerText = `(${item.pos})`;
+            document.querySelector('.card-front').style.borderColor = color;
+            
+            document.getElementById('def-display').innerText = item.def;
+            document.getElementById('def-display').style.color = (color === '#FFD93D') ? '#FF6B95' : '#FFD93D';
+            document.getElementById('sentence-en-display').innerText = item.sentence;
+            document.getElementById('sentence-zh-display').innerText = item.translation;
+            document.getElementById('card-back-face').style.backgroundColor = color;
+            
+            document.getElementById('card').classList.remove('flipped');
+            updateProg();
+        }
+
+        function updateProg() {
+            const m = wordData.length - list.length;
+            document.getElementById('progress-fill').style.width = (m / wordData.length * 100) + "%";
+            document.getElementById('progress-text').innerText = `${m} / ${wordData.length}`;
+        }
+
+        function flipCard() { document.getElementById('card').classList.toggle('flipped'); }
+        function nextCard() { if (!list.length) return; idx = (idx + 1) % list.length; update(); }
+        function prevCard() { if (!list.length) return; idx = (idx - 1 + list.length) % list.length; update(); }
+        
+        function markMastered() {
+            list.splice(idx, 1);
+            if (!list.length) return showSuccess();
+            if (idx >= list.length) idx = 0;
+            update();
+        }
+
+        function speakWord(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].word);
+            m.lang = 'en-US';
+            window.speechSynthesis.speak(m);
+        }
+
+        function speakSentence(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].sentence);
+            m.lang = 'en-US';
+            m.rate = 0.8;
+            window.speechSynthesis.speak(m);
+        }
+
+        function showSuccess() {
+            document.getElementById('learning-ui').style.display = 'none';
+            document.getElementById('header-ui').style.display = 'none';
+            document.getElementById('success-screen').style.display = 'flex';
+        }
+
+        function resetAll() {
+            list = [...wordData]; idx = 0;
+            document.getElementById('learning-ui').style.display = 'block';
+            document.getElementById('header-ui').style.display = 'block';
+            document.getElementById('success-screen').style.display = 'none';
+            update();
+        }
+
+        window.onload = update;
+    </script>
+</body>
+</html>
