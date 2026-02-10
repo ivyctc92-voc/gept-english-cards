@@ -1,0 +1,424 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GEPT Level W - 多巴胺單字卡 V8</title>
+    <style>
+        :root {
+            --bg-color: #F8F9FA;
+            --pink: #FF6B95;
+            --yellow: #FFD93D;
+            --green: #6BCB77;
+            --blue: #4D96FF;
+            --purple: #A29BFE;
+            --orange: #FF9F43;
+            --text-color: #2D3436;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 420px;
+            margin-bottom: 8px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: #EEE;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green), var(--yellow));
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .flashcard-container {
+            width: 420px;
+            height: 320px;
+            perspective: 1000px;
+            margin-bottom: 15px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flashcard.flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-front {
+            background-color: white;
+            border: 10px solid var(--pink);
+        }
+
+        .word-text {
+            font-weight: 900;
+            color: var(--pink);
+            margin: 0;
+            line-height: 1.1;
+            white-space: nowrap; 
+        }
+
+        .pos-text {
+            font-size: 20px;
+            color: #AAA;
+            font-style: italic;
+            margin-top: 8px;
+        }
+
+        .card-back {
+            background-color: var(--blue);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .def-text {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: var(--yellow);
+        }
+
+        .sentence-en {
+            font-size: 22px;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .sentence-zh {
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 12px;
+        }
+
+        .speak-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 42px;
+            height: 42px;
+            font-size: 22px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            width: 420px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .nav-btn, .status-btn {
+            height: 50px;
+            border: 3px solid var(--text-color);
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.1s;
+        }
+
+        .nav-btn {
+            width: 55px;
+            font-size: 22px;
+            background-color: var(--purple);
+            color: white;
+        }
+
+        .nav-btn.next { background-color: var(--yellow); color: var(--text-color); }
+
+        .status-btn { flex: 1; font-size: 16px; }
+
+        .btn-mastered { background-color: var(--green); color: white; }
+        .btn-learning { background-color: white; color: var(--text-color); }
+
+        .nav-btn:active, .status-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 var(--text-color);
+        }
+
+        #success-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        @media (max-width: 430px) {
+            .flashcard-container, .controls, .header { width: 95vw; }
+            .flashcard-container { height: 75vw; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" id="header-ui">
+        <div class="progress-info">
+            <span id="progress-text">0 / 83</span>
+            <span onclick="resetAll()" style="font-size: 12px; cursor:pointer; color: #888;">↺ 全部重來</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <div id="learning-ui">
+        <div class="flashcard-container">
+            <div class="flashcard" id="card" onclick="flipCard()">
+                <div class="card-face card-front">
+                    <button class="speak-btn" onclick="speakWord(event)">🔊</button>
+                    <p class="word-text" id="word-display">Word</p>
+                    <p class="pos-text" id="pos-display">(pos)</p>
+                </div>
+                <div class="card-face card-back" id="card-back-face">
+                    <button class="speak-btn" onclick="speakSentence(event)" style="border: 1px solid #eee;">🔊</button>
+                    <p class="def-text" id="def-display">定義</p>
+                    <p class="sentence-en" id="sentence-en-display">Sentence.</p>
+                    <p class="sentence-zh" id="sentence-zh-display">翻譯</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="nav-btn" onclick="prevCard()">⬅</button>
+            <button class="status-btn btn-mastered" onclick="markMastered()">已精熟</button>
+            <button class="status-btn btn-learning" onclick="nextCard()">學習中</button>
+            <button class="nav-btn next" onclick="nextCard()">➡</button>
+        </div>
+    </div>
+
+    <div id="success-screen">
+        <h1 style="color: var(--pink);">太棒了！🎉</h1>
+        <p>字母 W 的單字已全部熟記！</p>
+        <button class="status-btn" onclick="resetAll()" style="width: 150px; margin-top: 15px;">重新開始</button>
+    </div>
+
+    <script>
+        const wordData = [
+            { word: "waist", pos: "noun", def: "腰", sentence: "He has a thin waist.", translation: "他腰很細。" },
+            { word: "wait", pos: "verb", def: "等待", sentence: "Wait for me.", translation: "等等我。" },
+            { word: "waiter", pos: "noun", def: "男服務生", sentence: "The waiter is busy.", translation: "男服務員很忙。" },
+            { word: "waitress", pos: "noun", def: "女服務生", sentence: "The waitress is nice.", translation: "女服務員很親切。" },
+            { word: "wake", pos: "verb", def: "醒來", sentence: "Wake up!", translation: "醒醒！" },
+            { word: "walk", pos: "verb/noun", def: "走路", sentence: "I walk to school.", translation: "我走路上學。" },
+            { word: "wall", pos: "noun", def: "牆", sentence: "The wall is white.", translation: "牆是白色的。" },
+            { word: "wallet", pos: "noun", def: "皮夾", sentence: "I lost my wallet.", translation: "我丟了皮夾。" },
+            { word: "want", pos: "verb", def: "想要", sentence: "I want an apple.", translation: "我想要一個蘋果。" },
+            { word: "war", pos: "noun", def: "戰爭", sentence: "The war lasted for years.", translation: "戰爭持續了多年。" },
+            { word: "warm", pos: "adj.", def: "溫暖的", sentence: "The weather is warm.", translation: "天氣很溫暖。" },
+            { word: "warn", pos: "verb", def: "警告", sentence: "He warned me.", translation: "他警告過我。" },
+            { word: "wash", pos: "verb", def: "清洗", sentence: "Wash your hands.", translation: "洗手。" },
+            { word: "waste", pos: "verb/noun", def: "浪費", sentence: "Don't waste time.", translation: "不要浪費時間。" },
+            { word: "watch", pos: "verb/noun", def: "看；手錶", sentence: "I watch TV every night.", translation: "我每晚看電視。" },
+            { word: "water", pos: "noun", def: "水", sentence: "Drink some water.", translation: "喝點水。" },
+            { word: "watermelon", pos: "noun", def: "西瓜", sentence: "I like watermelon.", translation: "我喜歡西瓜。" },
+            { word: "wave", pos: "verb/noun", def: "揮手；波浪", sentence: "Wave goodbye.", translation: "揮手告別。" },
+            { word: "way", pos: "noun", def: "道路、方式", sentence: "Which way should I go?", translation: "我該走哪條路？" },
+            { word: "we", pos: "pron.", def: "我們", sentence: "We are friends.", translation: "我們是朋友。" },
+            { word: "weak", pos: "adj.", def: "虛弱的", sentence: "He feels weak.", translation: "他感到虛弱。" },
+            { word: "wear", pos: "verb", def: "穿戴", sentence: "Wear a hat.", translation: "戴帽子。" },
+            { word: "weather", pos: "noun", def: "天氣", sentence: "The weather is nice.", translation: "天氣很好。" },
+            { word: "wedding", pos: "noun", def: "婚禮", sentence: "It was a beautiful wedding.", translation: "那是一場美麗的婚禮。" },
+            { word: "Wednesday", pos: "noun", def: "星期三", sentence: "Today is Wednesday.", translation: "今天是星期三。" },
+            { word: "week", pos: "noun", def: "週", sentence: "Seven days in a week.", translation: "一週有七天。" },
+            { word: "weekend", pos: "noun", def: "週末", sentence: "Have a nice weekend.", translation: "週末愉快。" },
+            { word: "weekly", pos: "adj/adv", def: "每週一次", sentence: "It is a weekly magazine.", translation: "這是一本週刊。" },
+            { word: "weep", pos: "verb", def: "哭泣", sentence: "She started to weep.", translation: "她開始哭泣。" },
+            { word: "weigh", pos: "verb", def: "稱重", sentence: "How much do you weigh?", translation: "你體重多少？" },
+            { word: "weight", pos: "noun", def: "重量", sentence: "What is the weight?", translation: "重量是多少？" },
+            { word: "welcome", pos: "v/adj/n", def: "歡迎", sentence: "Welcome home.", translation: "歡迎回家。" },
+            { word: "well", pos: "adv/adj", def: "好地；健康的", sentence: "He plays well.", translation: "他玩得很好。" },
+            { word: "west", pos: "n/adj/adv", def: "西方", sentence: "The sun sets in the west.", translation: "太陽從西方落下。" },
+            { word: "wet", pos: "adj.", def: "濕的", sentence: "The grass is wet.", translation: "草地是濕的。" },
+            { word: "whale", pos: "noun", def: "鯨魚", sentence: "The whale is huge.", translation: "鯨魚很大。" },
+            { word: "what", pos: "pron/adj", def: "什麼", sentence: "What is this?", translation: "這是什麼？" },
+            { word: "wheel", pos: "noun", def: "輪子", sentence: "The car has four wheels.", translation: "這輛車有四個輪子。" },
+            { word: "when", pos: "adv/conj", def: "何時", sentence: "When is your birthday?", translation: "你的生日是什麼時候？" },
+            { word: "where", pos: "adv/conj", def: "哪裡", sentence: "Where are you?", translation: "你在哪裡？" },
+            { word: "whether", pos: "conj.", def: "是否", sentence: "Tell me whether it's true.", translation: "告訴我這是否屬實。" },
+            { word: "which", pos: "pron/adj", def: "哪一個", sentence: "Which one do you want?", translation: "你想要哪一個？" },
+            { word: "while", pos: "conj/n", def: "當...的時候", sentence: "Wait for a while.", translation: "等一會兒。" },
+            { word: "white", pos: "adj/n", def: "白色", sentence: "The cloud is white.", translation: "雲是白色的。" },
+            { word: "who", pos: "pron.", def: "誰", sentence: "Who are you?", translation: "你是誰？" },
+            { word: "whole", pos: "adj.", def: "全部的", sentence: "Eat the whole cake.", translation: "吃完整個蛋糕。" },
+            { word: "whose", pos: "pron.", def: "誰的", sentence: "Whose bag is this?", translation: "這是誰的包包？" },
+            { word: "why", pos: "adv/conj", def: "為什麼", sentence: "Why are you crying?", translation: "你為什麼在哭？" },
+            { word: "wide", pos: "adj.", def: "寬的", sentence: "The road is wide.", translation: "路很寬。" },
+            { word: "wife", pos: "noun", def: "妻子", sentence: "She is his wife.", translation: "她是他的妻子。" },
+            { word: "wild", pos: "adj.", def: "野生的", sentence: "Wild animals live here.", translation: "野生動物住在這。" },
+            { word: "will", pos: "aux.", def: "將", sentence: "I will help you.", translation: "我會幫你。" },
+            { word: "win", pos: "verb", def: "贏", sentence: "We won the game.", translation: "我們贏了比賽。" },
+            { word: "wind", pos: "noun", def: "風", sentence: "The wind is strong.", translation: "風很大。" },
+            { word: "window", pos: "noun", def: "窗戶", sentence: "Open the window.", translation: "打開窗戶。" },
+            { word: "windy", pos: "adj.", def: "有風的", sentence: "It's a windy day.", translation: "今天是個颳風天。" },
+            { word: "wine", pos: "noun", def: "葡萄酒", sentence: "I like red wine.", translation: "我喜歡紅酒。" },
+            { word: "wing", pos: "noun", def: "翅膀", sentence: "The bird has wings.", translation: "鳥有翅膀。" },
+            { word: "winner", pos: "noun", def: "贏家", sentence: "The winner gets a prize.", translation: "贏家可以得到獎品。" },
+            { word: "winter", pos: "noun", def: "冬天", sentence: "It snows in winter.", translation: "冬天下雪。" },
+            { word: "wipe", pos: "verb", def: "擦拭", sentence: "Wipe the table.", translation: "擦桌子。" },
+            { word: "wire", pos: "noun", def: "金屬線", sentence: "The wire is thin.", translation: "電線很細。" },
+            { word: "wise", pos: "adj.", def: "明智的", sentence: "He is a wise man.", translation: "他是個聰明人。" },
+            { word: "wish", pos: "verb/noun", def: "希望", sentence: "I wish you luck.", translation: "祝你好運。" },
+            { word: "with", pos: "prep.", def: "與...一起", sentence: "Come with me.", translation: "跟我來。" },
+            { word: "within", pos: "prep.", def: "在...之內", sentence: "Stay within the lines.", translation: "留在線內。" },
+            { word: "without", pos: "prep.", def: "沒有", sentence: "I can't live without water.", translation: "沒水我活不下去。" },
+            { word: "woman", pos: "noun", def: "女人", sentence: "She is a kind woman.", translation: "她是位善良的女性。" },
+            { word: "wonder", pos: "verb/noun", def: "想知道；奇蹟", sentence: "I wonder why.", translation: "我想知道為什麼。" },
+            { word: "wonderful", pos: "adj.", def: "美妙的", sentence: "Have a wonderful time.", translation: "祝你玩得愉快。" },
+            { word: "wood", pos: "noun", def: "木頭", sentence: "The table is made of wood.", translation: "桌子是木頭做的。" },
+            { word: "word", pos: "noun", def: "字", sentence: "Write down the word.", translation: "寫下這個字。" },
+            { word: "work", pos: "verb/noun", def: "工作", sentence: "He is at work.", translation: "他在工作。" },
+            { word: "workbook", pos: "noun", def: "習作", sentence: "Do your workbook.", translation: "做你的習作。" },
+            { word: "worker", pos: "noun", def: "工人", sentence: "He is a hard worker.", translation: "他是個勤奮的工人。" },
+            { word: "world", pos: "noun", def: "世界", sentence: "Travel around the world.", translation: "環遊世界。" },
+            { word: "worry", pos: "verb/noun", def: "擔心", sentence: "Don't worry.", translation: "別擔心。" },
+            { word: "wound", pos: "n/v", def: "傷口；受傷", sentence: "He has a wound on his arm.", translation: "他手臂上有個傷口。" },
+            { word: "wrist", pos: "noun", def: "手腕", sentence: "My wrist hurts.", translation: "我手腕痛。" },
+            { word: "write", pos: "verb", def: "寫", sentence: "Write your name.", translation: "寫下你的名字。" },
+            { word: "writer", pos: "noun", def: "作家", sentence: "She is a famous writer.", translation: "她是位名作家。" },
+            { word: "wrong", pos: "adj.", def: "錯誤的", sentence: "You are wrong.", translation: "你錯了。" }
+        ];
+
+        let list = [...wordData];
+        let idx = 0;
+        const colors = ['#FF6B95', '#FFD93D', '#6BCB77', '#4D96FF', '#FF9F43'];
+
+        function update() {
+            if (!list.length) return showSuccess();
+            const item = list[idx];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const wordEl = document.getElementById('word-display');
+            
+            let fontSize = 64; 
+            if (item.word.length > 13) fontSize = 38;
+            else if (item.word.length > 10) fontSize = 48;
+            
+            wordEl.innerText = item.word;
+            wordEl.style.fontSize = fontSize + "px";
+            wordEl.style.color = color;
+            
+            document.getElementById('pos-display').innerText = `(${item.pos})`;
+            document.querySelector('.card-front').style.borderColor = color;
+            
+            document.getElementById('def-display').innerText = item.def;
+            document.getElementById('def-display').style.color = (color === '#FFD93D') ? '#FF6B95' : '#FFD93D';
+            document.getElementById('sentence-en-display').innerText = item.sentence;
+            document.getElementById('sentence-zh-display').innerText = item.translation;
+            document.getElementById('card-back-face').style.backgroundColor = color;
+            
+            document.getElementById('card').classList.remove('flipped');
+            updateProg();
+        }
+
+        function updateProg() {
+            const m = wordData.length - list.length;
+            document.getElementById('progress-fill').style.width = (m / wordData.length * 100) + "%";
+            document.getElementById('progress-text').innerText = `${m} / ${wordData.length}`;
+        }
+
+        function flipCard() { document.getElementById('card').classList.toggle('flipped'); }
+        function nextCard() { if (!list.length) return; idx = (idx + 1) % list.length; update(); }
+        function prevCard() { if (!list.length) return; idx = (idx - 1 + list.length) % list.length; update(); }
+        
+        function markMastered() {
+            list.splice(idx, 1);
+            if (!list.length) return showSuccess();
+            if (idx >= list.length) idx = 0;
+            update();
+        }
+
+        function speakWord(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].word);
+            m.lang = 'en-US';
+            window.speechSynthesis.speak(m);
+        }
+
+        function speakSentence(e) {
+            e.stopPropagation();
+            const m = new SpeechSynthesisUtterance(list[idx].sentence);
+            m.lang = 'en-US';
+            m.rate = 0.8;
+            window.speechSynthesis.speak(m);
+        }
+
+        function showSuccess() {
+            document.getElementById('learning-ui').style.display = 'none';
+            document.getElementById('header-ui').style.display = 'none';
+            document.getElementById('success-screen').style.display = 'flex';
+        }
+
+        function resetAll() {
+            list = [...wordData]; idx = 0;
+            document.getElementById('learning-ui').style.display = 'block';
+            document.getElementById('header-ui').style.display = 'block';
+            document.getElementById('success-screen').style.display = 'none';
+            update();
+        }
+
+        window.onload = update;
+    </script>
+</body>
+</html>
